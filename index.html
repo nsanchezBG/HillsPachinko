@@ -2,46 +2,30 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Hill's Pachinko</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Hill's Pachinko DOM</title>
   <style>
     :root {
       --brand-font: "Gotham", "Gotham SSm", "Gotham Rounded", "Montserrat", "Avenir Next", "Proxima Nova", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --blue: #2d6eb8;
       --blue-mid: #3478c6;
       --blue-dark: #1d5599;
-      --blue-deep: #0b3265;
-      --chrome-a: #ffffff;
-      --chrome-b: #d8e0e8;
-      --chrome-c: #8e9aa8;
-      --ink: #07111f;
-      --muted: #41526c;
       --paper: #f8fbff;
       --paper-low: #e8eef8;
-      --shadow: 0 26px 64px rgba(4, 30, 66, 0.42);
       --press-time: 110ms;
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-    }
-
+    * { box-sizing: border-box; }
+    html, body { width: 100%; min-height: 100%; margin: 0; }
     body {
       display: grid;
       place-items: start center;
       min-height: 100dvh;
       padding: 10px;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 32%),
+        linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 32%),
         linear-gradient(145deg, #3b7fc7 0%, var(--blue) 42%, #205a9e 72%, #174986 100%);
-      color: var(--ink);
+      color: #07111f;
       font-family: var(--brand-font);
       overflow: auto;
       text-rendering: geometricPrecision;
@@ -55,16 +39,12 @@
       width: calc(100vw - 20px);
       max-width: 455px;
       padding: clamp(10px, 1.6vh, 14px) clamp(10px, 2.4vw, 14px) clamp(10px, 1.8vh, 14px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: clamp(20px, 5vw, 28px);
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 20%),
+        linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0) 20%),
         linear-gradient(180deg, var(--blue-mid) 0%, var(--blue) 44%, var(--blue-dark) 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.35),
-        inset 0 -10px 22px rgba(9, 48, 98, 0.24),
-        0 2px 0 rgba(255, 255, 255, 0.12),
-        var(--shadow);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -10px 22px rgba(9,48,98,0.24), 0 2px 0 rgba(255,255,255,0.12), 0 26px 64px rgba(4,30,66,0.42);
     }
 
     .board-frame {
@@ -72,20 +52,11 @@
       display: grid;
       place-items: center;
       width: 100%;
-      min-height: 0;
       margin-top: clamp(18px, 4.6vw, 26px);
       padding: clamp(7px, 1.8vw, 10px);
       border-radius: clamp(38px, 9vw, 52px);
-      background:
-        linear-gradient(130deg, #ffffff 0%, #cad4df 13%, #6f7f91 25%, #f7fbff 39%, #a7b2bf 54%, #ffffff 69%, #788696 83%, #d7e1eb 100%);
-      box-shadow:
-        inset 0 3px 0 rgba(255, 255, 255, 0.95),
-        inset 0 -4px 0 rgba(47, 60, 76, 0.54),
-        inset 3px 0 4px rgba(255, 255, 255, 0.62),
-        inset -4px 0 7px rgba(49, 64, 82, 0.36),
-        0 2px 0 rgba(255, 255, 255, 0.28),
-        0 7px 0 rgba(3, 31, 70, 0.34),
-        0 14px 18px rgba(0, 18, 47, 0.48);
+      background: linear-gradient(130deg, #ffffff 0%, #cad4df 13%, #6f7f91 25%, #f7fbff 39%, #a7b2bf 54%, #ffffff 69%, #788696 83%, #d7e1eb 100%);
+      box-shadow: inset 0 3px 0 rgba(255,255,255,0.95), inset 0 -4px 0 rgba(47,60,76,0.54), inset 3px 0 4px rgba(255,255,255,0.62), inset -4px 0 7px rgba(49,64,82,0.36), 0 2px 0 rgba(255,255,255,0.28), 0 7px 0 rgba(3,31,70,0.34), 0 14px 18px rgba(0,18,47,0.48);
     }
 
     .board-blue-shell {
@@ -95,39 +66,8 @@
       overflow: hidden;
       padding: clamp(3px, 0.8vw, 5px) clamp(15px, 4vw, 22px) clamp(5px, 1.4vw, 8px);
       border-radius: clamp(32px, 8vw, 45px);
-      background:
-        linear-gradient(90deg, #022353 0%, #0859b5 7%, #0a73d8 12%, #064086 18%, #064086 82%, #0a73d8 88%, #0859b5 93%, #022353 100%);
-      box-shadow:
-        inset 0 2px 0 rgba(112, 184, 255, 0.46),
-        inset 0 -5px 10px rgba(0, 16, 48, 0.64),
-        inset 8px 0 14px rgba(0, 16, 48, 0.58),
-        inset -8px 0 14px rgba(0, 16, 48, 0.58),
-        0 1px 0 rgba(255, 255, 255, 0.38);
-    }
-
-    .board-blue-shell::before,
-    .board-blue-shell::after {
-      content: "";
-      position: absolute;
-      z-index: 1;
-      top: 8%;
-      bottom: 9%;
-      width: clamp(20px, 5.2vw, 30px);
-      border-radius: 999px;
-      opacity: 0;
-      pointer-events: none;
-      mix-blend-mode: screen;
-      background:
-        radial-gradient(ellipse at center, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.58) 24%, rgba(116, 194, 255, 0.2) 50%, rgba(116, 194, 255, 0) 74%);
-      filter: blur(1.6px);
-    }
-
-    .board-blue-shell::before {
-      left: clamp(4px, 1.3vw, 7px);
-    }
-
-    .board-blue-shell::after {
-      right: clamp(4px, 1.3vw, 7px);
+      background: linear-gradient(90deg, #022353 0%, #0859b5 7%, #0a73d8 12%, #064086 18%, #064086 82%, #0a73d8 88%, #0859b5 93%, #022353 100%);
+      box-shadow: inset 0 2px 0 rgba(112,184,255,0.46), inset 0 -5px 10px rgba(0,16,48,0.64), inset 8px 0 14px rgba(0,16,48,0.58), inset -8px 0 14px rgba(0,16,48,0.58), 0 1px 0 rgba(255,255,255,0.38);
     }
 
     .board-inner-frame {
@@ -136,20 +76,13 @@
       width: 100%;
       padding: clamp(6px, 1.6vw, 9px);
       border-radius: clamp(29px, 7.4vw, 40px);
-      background:
-        linear-gradient(145deg, #ffffff 0%, #dce5ef 15%, #8a99aa 28%, #ffffff 43%, #c5cfda 59%, #768799 74%, #f7fbff 100%);
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.96),
-        inset 0 -3px 0 rgba(51, 66, 84, 0.5),
-        inset 3px 0 5px rgba(255, 255, 255, 0.68),
-        inset -4px 0 7px rgba(50, 65, 84, 0.28),
-        0 0 0 1px rgba(255, 255, 255, 0.42),
-        0 4px 8px rgba(0, 24, 62, 0.28);
+      background: linear-gradient(145deg, #ffffff 0%, #dce5ef 15%, #8a99aa 28%, #ffffff 43%, #c5cfda 59%, #768799 74%, #f7fbff 100%);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.96), inset 0 -3px 0 rgba(51,66,84,0.5), inset 3px 0 5px rgba(255,255,255,0.68), inset -4px 0 7px rgba(50,65,84,0.28), 0 0 0 1px rgba(255,255,255,0.42), 0 4px 8px rgba(0,24,62,0.28);
     }
 
     .board-logo-plaque {
       position: absolute;
-      z-index: 6;
+      z-index: 20;
       top: clamp(-48px, -10.6vw, -38px);
       left: 50%;
       display: grid;
@@ -160,1840 +93,231 @@
       transform: translateX(-50%);
       border: 2px solid transparent;
       border-radius: 0 0 17px 17px;
-      background:
-        linear-gradient(180deg, #ffffff 0%, #fbfdff 46%, #e5edf5 75%, #cbd7e4 100%) padding-box,
-        linear-gradient(135deg, #ffffff 0%, #bac6d3 23%, #f7fbff 48%, #8b99a8 75%, #ffffff 100%) border-box;
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.98),
-        inset 0 -10px 18px rgba(43, 67, 94, 0.18),
-        inset 5px 0 10px rgba(255, 255, 255, 0.42),
-        inset -5px 0 10px rgba(56, 72, 90, 0.12),
-        0 5px 0 rgba(28, 55, 91, 0.2),
-        0 13px 18px rgba(4, 29, 69, 0.26);
+      background: linear-gradient(180deg, #fff 0%, #fbfdff 46%, #e5edf5 75%, #cbd7e4 100%) padding-box, linear-gradient(135deg, #fff 0%, #bac6d3 23%, #f7fbff 48%, #8b99a8 75%, #fff 100%) border-box;
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.98), inset 0 -10px 18px rgba(43,67,94,0.18), 0 5px 0 rgba(28,55,91,0.2), 0 13px 18px rgba(4,29,69,0.26);
     }
+    .board-logo-plaque img { display: block; width: 92%; height: 92%; object-fit: contain; }
 
-    .board-logo-plaque img {
-      display: block;
-      width: 92%;
-      height: 92%;
-      object-fit: contain;
-    }
-
-    canvas {
-      display: block;
+    #playfield {
+      position: relative;
+      overflow: hidden;
       width: 100%;
-      height: auto;
       aspect-ratio: 720 / 960;
-      border: 0;
       border-radius: clamp(23px, 6.4vw, 34px);
-      touch-action: none;
-      background: #fbf8f2;
-      box-shadow:
-        inset 0 0 0 1px rgba(34, 64, 92, 0.24),
-        0 1px 0 rgba(255, 255, 255, 0.96),
-        0 10px 20px rgba(5, 30, 66, 0.18);
+      background: #fbf8f2 url("Assets/board-bg.png") center / 100% 100% no-repeat;
+      contain: layout paint style;
+      transform: translateZ(0);
+      box-shadow: inset 0 0 0 1px rgba(34,64,92,0.24), 0 1px 0 rgba(255,255,255,0.96), 0 10px 20px rgba(5,30,66,0.18);
+      touch-action: manipulation;
     }
 
-    .hud {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: clamp(9px, 2.6vw, 13px);
-      min-height: clamp(106px, 15.5vh, 124px);
-    }
-
-    button {
-      border: 0;
-      color: var(--ink);
-      font: inherit;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+    .entity {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform-origin: center;
+      pointer-events: none;
       user-select: none;
+      -webkit-user-drag: none;
+      will-change: transform;
+      contain: layout paint style;
+      image-rendering: auto;
+    }
+    .static { will-change: auto; }
+    .ball { z-index: 9; }
+    .peg { z-index: 3; }
+    .bumper { z-index: 5; }
+    .slot { z-index: 6; }
+    .wall { z-index: 7; }
+    .piso { z-index: 1; }
+    .reward {
+      position: absolute;
+      z-index: 12;
+      left: 0;
+      top: 0;
+      color: #ffd166;
+      font-weight: 950;
+      font-size: 30px;
+      line-height: 1;
+      text-shadow: 0 2px 0 rgba(76,40,0,0.4);
+      transform: translate3d(-50%, -50%, 0);
+      pointer-events: none;
+      will-change: transform, opacity;
     }
 
-    button:disabled {
-      cursor: not-allowed;
-      filter: grayscale(0.35);
-      opacity: 0.62;
-    }
+    .hud { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: clamp(9px, 2.6vw, 13px); min-height: clamp(106px, 15.5vh, 124px); }
+    button { border: 0; color: #07111f; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+    button:disabled { cursor: not-allowed; filter: grayscale(0.35); opacity: 0.62; }
 
     .score-card {
-      justify-self: start;
-      position: relative;
-      overflow: hidden;
-      display: grid;
-      place-items: center;
-      width: 100%;
-      min-width: 0;
-      height: clamp(94px, 13.7vh, 108px);
-      border: 1px solid rgba(255, 255, 255, 0.82);
-      border-radius: clamp(18px, 5vw, 24px);
-      background:
-        linear-gradient(180deg, #ffffff 0%, var(--paper) 45%, var(--paper-low) 100%);
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.95),
-        inset 0 -8px 15px rgba(41, 74, 115, 0.12),
-        0 7px 0 rgba(10, 49, 101, 0.42),
-        0 18px 28px rgba(8, 35, 75, 0.22);
+      justify-self: start; position: relative; overflow: hidden; display: grid; place-items: center; width: 100%; min-width: 0; height: clamp(94px, 13.7vh, 108px); border: 1px solid rgba(255,255,255,0.82); border-radius: clamp(18px,5vw,24px); background: linear-gradient(180deg,#fff 0%,var(--paper) 45%,var(--paper-low) 100%); box-shadow: inset 0 2px 0 rgba(255,255,255,0.95), inset 0 -8px 15px rgba(41,74,115,0.12), 0 7px 0 rgba(10,49,101,0.42), 0 18px 28px rgba(8,35,75,0.22);
     }
-
-    .score-card::before {
-      content: "";
-      position: absolute;
-      inset: 0 0 auto;
-      height: 45%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0));
-      pointer-events: none;
-    }
-
-    .score-card > div {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      justify-items: center;
-      gap: 6px;
-    }
-
-    .score-label {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      color: #074c9f;
-      font-size: clamp(17px, 4.7vw, 22px);
-      line-height: 1;
-      font-weight: 850;
-      letter-spacing: 0;
-    }
-
-    .score-card strong {
-      display: block;
-      color: #074c9f;
-      font-size: clamp(39px, 10vw, 52px);
-      line-height: 0.82;
-      font-weight: 950;
-      letter-spacing: 0;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.62);
-    }
-
-    .logo {
-      align-self: start;
-      justify-self: end;
-      width: clamp(58px, 15vw, 70px);
-      height: clamp(58px, 15vw, 70px);
-      padding: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.86);
-      border-radius: 999px;
-      background:
-        linear-gradient(180deg, #ffffff 0%, #f6f8fb 54%, #dbe5ef 100%);
-      object-fit: contain;
-      margin-top: 2px;
-      image-rendering: auto;
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.96),
-        inset 0 -8px 13px rgba(41, 70, 106, 0.12),
-        0 6px 0 rgba(7, 48, 103, 0.44),
-        0 14px 24px rgba(5, 31, 71, 0.24);
-      filter:
-        drop-shadow(0 1px 0 rgba(255, 255, 255, 0.22));
-    }
+    .score-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 45%; background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0)); pointer-events: none; }
+    .score-card > div { position: relative; z-index: 1; display: grid; justify-items: center; gap: 6px; }
+    .score-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #074c9f; font-size: clamp(17px,4.7vw,22px); line-height: 1; font-weight: 850; }
+    .score-card strong { display: block; color: #074c9f; font-size: clamp(39px,10vw,52px); line-height: 0.82; font-weight: 950; font-variant-numeric: tabular-nums; }
+    .paw-icon { width: 0.5em; height: 0.5em; object-fit: contain; flex: 0 0 auto; }
+    .paw-blue { filter: invert(23%) sepia(96%) saturate(1661%) hue-rotate(194deg) brightness(88%) contrast(101%); opacity: 0.5; }
+    .paw-white { filter: invert(1) drop-shadow(0 1px 0 rgba(98,0,22,0.35)); opacity: 0.78; }
 
     .roll {
-      justify-self: end;
-      position: relative;
-      overflow: hidden;
-      display: grid;
-      place-items: center;
-      width: min(164px, 37vw);
-      min-width: 128px;
-      height: clamp(84px, 12.4vh, 98px);
-      border: 2px solid rgba(255, 255, 255, 0.78);
-      border-radius: clamp(28px, 7.4vw, 42px);
-      background:
-        radial-gradient(ellipse at 50% 17%, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.08) 33%, rgba(255, 255, 255, 0) 49%),
-        linear-gradient(180deg, #ff5e66 0%, #ed1c35 48%, #b90d27 100%);
-      box-shadow:
-        inset 0 3px 0 rgba(255, 255, 255, 0.42),
-        inset 0 0 0 2px rgba(255, 255, 255, 0.18),
-        inset 0 -12px 16px rgba(80, 0, 18, 0.28),
-        inset 5px 0 10px rgba(255, 255, 255, 0.12),
-        inset -5px 0 10px rgba(63, 0, 18, 0.22),
-        0 3px 0 rgba(255, 255, 255, 0.28),
-        0 8px 0 rgba(108, 7, 29, 0.95),
-        0 12px 12px rgba(0, 16, 44, 0.52);
-      transition: transform var(--press-time) ease, box-shadow var(--press-time) ease, filter var(--press-time) ease;
+      justify-self: end; position: relative; overflow: hidden; display: grid; place-items: center; width: min(164px,37vw); min-width: 128px; height: clamp(84px,12.4vh,98px); border: 2px solid rgba(255,255,255,0.78); border-radius: clamp(28px,7.4vw,42px); background: radial-gradient(ellipse at 50% 17%, rgba(255,255,255,0.62), rgba(255,255,255,0.08) 33%, rgba(255,255,255,0) 49%), linear-gradient(180deg,#ff5e66 0%,#ed1c35 48%,#b90d27 100%); box-shadow: inset 0 3px 0 rgba(255,255,255,0.42), inset 0 0 0 2px rgba(255,255,255,0.18), inset 0 -12px 16px rgba(80,0,18,0.28), 0 8px 0 rgba(108,7,29,0.95), 0 12px 12px rgba(0,16,44,0.52); transition: transform var(--press-time) ease;
     }
+    .roll:active:not(:disabled) { transform: translateY(6px) scale(0.985); }
+    .roll-text { position: relative; z-index: 1; display: grid; justify-items: center; gap: 6px; }
+    .roll-text strong { font-size: clamp(27px,7.8vw,36px); line-height: 0.9; font-weight: 950; color: #fff; text-shadow: 0 2px 0 rgba(77,0,18,0.32); }
+    .roll-cost { display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-size: clamp(14px,4vw,19px); line-height: 1; font-weight: 900; color: rgba(255,255,255,0.94); }
 
-    .roll::before {
-      content: "";
-      position: absolute;
-      inset: 8% 8% 50%;
-      border-radius: 999px 999px 40% 40%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.08) 70%, rgba(255, 255, 255, 0));
-      pointer-events: none;
-    }
+    .multipliers { display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(6px,1.8vw,9px); width: 100%; }
+    .multiplier { min-width: 0; height: clamp(48px,7.4vh,60px); border: 4px solid transparent; border-radius: clamp(9px,2.5vw,12px); background: linear-gradient(90deg, rgba(46,66,88,0.38), rgba(255,255,255,0.78) 11%, rgba(255,255,255,0) 24%, rgba(0,0,0,0.1) 100%) padding-box, linear-gradient(180deg,var(--m-top) 0%,var(--m-mid) 54%,var(--m-bottom) 100%) padding-box, linear-gradient(135deg,#fff 0%,#c9d2dc 16%,#6e7a88 31%,#fff 48%,#b7c0ca 62%,#5d6976 79%,#eef4fb 100%) border-box; color: var(--m-ink,#080b10); font-size: clamp(24px,6.8vw,34px); line-height: 1; font-weight: 650; box-shadow: inset 0 2px 0 rgba(255,255,255,0.56), inset 0 -6px 10px rgba(0,0,0,0.09), 0 7px 0 var(--m-edge), 0 10px 10px rgba(0,16,44,0.42); transition: transform var(--press-time) ease; }
+    .multiplier[data-count="1"] { --m-top:#fff; --m-mid:#eef3fb; --m-bottom:#d7e0ed; --m-edge:#aeb9c8; --m-ink:#074c9f; }
+    .multiplier[data-count="2"] { --m-top:#fff; --m-mid:#cfd8e2; --m-bottom:#9ca9b6; --m-edge:#637080; --m-ink:#074c9f; }
+    .multiplier[data-count="3"] { --m-top:#ffe889; --m-mid:#f6c532; --m-bottom:#d9a21b; --m-edge:#a77815; --m-ink:#074c9f; }
+    .multiplier[data-count="5"] { --m-top:#ffb15f; --m-mid:#f5822e; --m-bottom:#d9651e; --m-edge:#a44716; --m-ink:#fff; }
+    .multiplier[data-count="10"] { --m-top:#ff8b51; --m-mid:#f05d25; --m-bottom:#cb4218; --m-edge:#963011; --m-ink:#fff; }
+    .multiplier.active { transform: translateY(-2px); filter: saturate(1.06); outline: 2px solid rgba(255,255,255,0.9); }
+    .multiplier:active { transform: translateY(5px); }
 
-    .roll:active:not(:disabled) {
-      transform: translateY(6px) scale(0.985);
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.22),
-        inset 0 9px 18px rgba(65, 0, 16, 0.26),
-        0 2px 0 rgba(255, 255, 255, 0.3),
-        0 3px 0 rgba(103, 8, 30, 0.86),
-        0 7px 9px rgba(0, 16, 44, 0.42);
-    }
+    .toast { position: absolute; left: 50%; bottom: 166px; transform: translateX(-50%); min-width: 158px; padding: 10px 15px; border: 1px solid rgba(255,255,255,0.74); border-radius: 999px; background: linear-gradient(180deg,rgba(255,255,255,0.97),rgba(234,241,251,0.94)); color: #183a68; font-size: 13px; font-weight: 850; text-align: center; opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
+    .toast.show { opacity: 1; transform: translate(-50%, -5px); }
 
-    .roll-text {
-      position: relative;
-      z-index: 1;
-      display: grid;
-      justify-items: center;
-      gap: 6px;
-    }
-
-    .roll-text strong {
-      font-size: clamp(27px, 7.8vw, 36px);
-      line-height: 0.9;
-      font-weight: 950;
-      letter-spacing: 0;
-      color: #ffffff;
-      text-shadow: 0 2px 0 rgba(77, 0, 18, 0.32);
-    }
-
-    .roll-cost {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      font-size: clamp(14px, 4vw, 19px);
-      line-height: 1;
-      font-weight: 900;
-      color: rgba(255, 255, 255, 0.94);
-      letter-spacing: 0;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .paw-icon {
-      display: inline-block;
-      width: 0.5em;
-      height: 0.5em;
-      object-fit: contain;
-      flex: 0 0 auto;
-    }
-
-    .paw-blue {
-      filter: invert(23%) sepia(96%) saturate(1661%) hue-rotate(194deg) brightness(88%) contrast(101%);
-      opacity: 0.5;
-    }
-
-    .paw-white {
-      filter: invert(1) drop-shadow(0 1px 0 rgba(98, 0, 22, 0.35));
-      opacity: 0.78;
-    }
-
-    .multipliers {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: clamp(6px, 1.8vw, 9px);
-      width: 100%;
-    }
-
-    .multiplier {
-      min-width: 0;
-      height: clamp(48px, 7.4vh, 60px);
-      border: 4px solid transparent;
-      border-radius: clamp(9px, 2.5vw, 12px);
-      background:
-        linear-gradient(90deg, rgba(46, 66, 88, 0.38), rgba(255, 255, 255, 0.78) 11%, rgba(255, 255, 255, 0) 24%, rgba(0, 0, 0, 0.1) 100%) padding-box,
-        linear-gradient(180deg, var(--m-top) 0%, var(--m-mid) 54%, var(--m-bottom) 100%) padding-box,
-        linear-gradient(135deg, #ffffff 0%, #c9d2dc 16%, #6e7a88 31%, #ffffff 48%, #b7c0ca 62%, #5d6976 79%, #eef4fb 100%) border-box;
-      color: var(--m-ink, #080b10);
-      font-size: clamp(24px, 6.8vw, 34px);
-      line-height: 1;
-      font-weight: 650;
-      letter-spacing: 0;
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.56),
-        inset 0 -6px 10px rgba(0, 0, 0, 0.09),
-        inset 4px 0 8px rgba(255, 255, 255, 0.16),
-        inset -4px 0 8px rgba(0, 0, 0, 0.12),
-        0 4px 0 rgba(255, 255, 255, 0.36),
-        0 7px 0 var(--m-edge),
-        0 10px 10px rgba(0, 16, 44, 0.42);
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.36);
-      transition: transform var(--press-time) ease, box-shadow var(--press-time) ease, filter var(--press-time) ease;
-    }
-
-    .multiplier[data-count="1"] {
-      --m-top: #ffffff;
-      --m-mid: #eef3fb;
-      --m-bottom: #d7e0ed;
-      --m-edge: #aeb9c8;
-      --m-ink: #074c9f;
-    }
-
-    .multiplier[data-count="2"] {
-      --m-top: #ffffff;
-      --m-mid: #cfd8e2;
-      --m-bottom: #9ca9b6;
-      --m-edge: #637080;
-      --m-ink: #074c9f;
-    }
-
-    .multiplier[data-count="3"] {
-      --m-top: #ffe889;
-      --m-mid: #f6c532;
-      --m-bottom: #d9a21b;
-      --m-edge: #a77815;
-      --m-ink: #074c9f;
-    }
-
-    .multiplier[data-count="5"] {
-      --m-top: #ffb15f;
-      --m-mid: #f5822e;
-      --m-bottom: #d9651e;
-      --m-edge: #a44716;
-      --m-ink: #ffffff;
-    }
-
-    .multiplier[data-count="10"] {
-      --m-top: #ff8b51;
-      --m-mid: #f05d25;
-      --m-bottom: #cb4218;
-      --m-edge: #963011;
-      --m-ink: #ffffff;
-    }
-
-    .multiplier.active {
-      outline: 0;
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.62),
-        inset 0 -6px 10px rgba(0, 0, 0, 0.1),
-        inset 4px 0 8px rgba(255, 255, 255, 0.16),
-        inset -4px 0 8px rgba(0, 0, 0, 0.12),
-        0 0 0 2px rgba(255, 255, 255, 0.92),
-        0 0 0 4px rgba(8, 44, 92, 0.26),
-        0 7px 0 var(--m-edge),
-        0 11px 11px rgba(0, 16, 44, 0.46);
-      transform: translateY(-2px);
-      filter: saturate(1.06);
-    }
-
-    .multiplier:active {
-      transform: translateY(5px);
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.45),
-        inset 0 5px 12px rgba(0, 0, 0, 0.15),
-        0 1px 0 var(--m-edge),
-        0 5px 7px rgba(0, 16, 44, 0.34);
-    }
-
-    .multiplier.active:active {
-      transform: translateY(4px);
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.48),
-        inset 0 5px 12px rgba(0, 0, 0, 0.15),
-        0 0 0 3px rgba(255, 255, 255, 0.82),
-        0 1px 0 var(--m-edge),
-        0 5px 7px rgba(0, 16, 44, 0.34);
-    }
-
-    .machine.slot-impact .board-blue-shell {
-      animation: board-impact-drift 360ms cubic-bezier(0.2, 0.8, 0.28, 1) 8ms both;
-    }
-
-    .machine.slot-impact .board-inner-frame {
-      animation: board-impact-noise 430ms cubic-bezier(0.2, 0.8, 0.28, 1) 36ms both;
-    }
-
-    .machine.slot-impact .score-card {
-      animation: ui-impact-left 350ms cubic-bezier(0.18, 0.88, 0.26, 1) 18ms both;
-    }
-
-    .machine.slot-impact .roll {
-      animation: ui-impact-right 410ms cubic-bezier(0.18, 0.88, 0.26, 1) 62ms both;
-    }
-
-    .machine.slot-impact .multiplier:nth-child(1) {
-      animation: ui-impact-chip-a 320ms cubic-bezier(0.2, 0.84, 0.28, 1) 28ms both;
-    }
-
-    .machine.slot-impact .multiplier:nth-child(2) {
-      animation: ui-impact-chip-b 380ms cubic-bezier(0.2, 0.84, 0.28, 1) 48ms both;
-    }
-
-    .machine.slot-impact .multiplier:nth-child(3) {
-      animation: ui-impact-chip-a 350ms cubic-bezier(0.2, 0.84, 0.28, 1) 72ms both;
-    }
-
-    .machine.slot-impact .multiplier:nth-child(4) {
-      animation: ui-impact-chip-b 420ms cubic-bezier(0.2, 0.84, 0.28, 1) 38ms both;
-    }
-
-    .machine.slot-impact .multiplier:nth-child(5) {
-      animation: ui-impact-chip-a 360ms cubic-bezier(0.2, 0.84, 0.28, 1) 92ms both;
-    }
-
-    .machine.bumper-impact .board-blue-shell::before {
-      animation: side-rail-glint 560ms ease-out both;
-    }
-
-    .machine.bumper-impact .board-blue-shell::after {
-      animation: side-rail-glint 620ms ease-out 36ms both;
-    }
-
-    @keyframes board-impact-drift {
-      0% { transform: translate3d(0, 0, 0) rotate(0deg); filter: brightness(1); }
-      18% { transform: translate3d(-1.4px, 1px, 0) rotate(-0.14deg); filter: brightness(1.035); }
-      37% { transform: translate3d(1.7px, -0.8px, 0) rotate(0.16deg); }
-      61% { transform: translate3d(-0.7px, 0.5px, 0) rotate(-0.08deg); }
-      100% { transform: translate3d(0, 0, 0) rotate(0deg); filter: brightness(1); }
-    }
-
-    @keyframes board-impact-noise {
-      0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-      16% { transform: translate3d(1px, -0.8px, 0) rotate(0.09deg); }
-      31% { transform: translate3d(-1.3px, 0.6px, 0) rotate(-0.12deg); }
-      57% { transform: translate3d(0.8px, 0.3px, 0) rotate(0.05deg); }
-      100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-    }
-
-    @keyframes ui-impact-left {
-      0% { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
-      23% { transform: translate3d(1.2px, -0.8px, 0) scale(1.006); filter: brightness(1.045); }
-      49% { transform: translate3d(-0.8px, 1px, 0) scale(0.998); }
-      100% { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
-    }
-
-    @keyframes ui-impact-right {
-      0% { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
-      19% { transform: translate3d(-1px, 0.8px, 0) scale(1.005); filter: brightness(1.04); }
-      44% { transform: translate3d(1.3px, -0.6px, 0) scale(0.999); }
-      72% { transform: translate3d(-0.4px, 0.2px, 0) scale(1.002); }
-      100% { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
-    }
-
-    @keyframes ui-impact-chip-a {
-      0% { transform: translate3d(0, 0, 0); }
-      35% { transform: translate3d(0.7px, -1px, 0); }
-      68% { transform: translate3d(-0.7px, 0.6px, 0); }
-      100% { transform: translate3d(0, 0, 0); }
-    }
-
-    @keyframes ui-impact-chip-b {
-      0% { transform: translate3d(0, 0, 0); }
-      28% { transform: translate3d(-0.8px, 0.7px, 0); }
-      59% { transform: translate3d(0.6px, -0.8px, 0); }
-      100% { transform: translate3d(0, 0, 0); }
-    }
-
-    @keyframes side-rail-glint {
-      0% { opacity: 0; transform: translateY(13%) scaleY(0.78); }
-      18% { opacity: 0.95; transform: translateY(2%) scaleY(1.04); }
-      47% { opacity: 0.42; transform: translateY(-5%) scaleY(1.12); }
-      100% { opacity: 0; transform: translateY(-15%) scaleY(0.9); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .machine.slot-impact .board-blue-shell,
-      .machine.slot-impact .board-inner-frame,
-      .machine.slot-impact .score-card,
-      .machine.slot-impact .roll,
-      .machine.slot-impact .multiplier,
-      .machine.bumper-impact .board-blue-shell::before,
-      .machine.bumper-impact .board-blue-shell::after {
-        animation: none;
-      }
-    }
-
-    button:focus-visible {
-      outline: 3px solid rgba(255, 255, 255, 0.9);
-      outline-offset: 3px;
-    }
-
-    .toast {
-      position: absolute;
-      left: 50%;
-      bottom: 166px;
-      transform: translateX(-50%);
-      min-width: 158px;
-      padding: 10px 15px;
-      border: 1px solid rgba(255, 255, 255, 0.74);
-      border-radius: 999px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(234, 241, 251, 0.94));
-      color: #183a68;
-      font-size: 13px;
-      font-weight: 850;
-      text-align: center;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.86),
-        0 12px 28px rgba(11, 38, 77, 0.24);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 180ms ease, transform 180ms ease;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translate(-50%, -5px);
-    }
+    .machine.slot-impact .score-card { animation: ui-impact-left 350ms cubic-bezier(0.18,0.88,0.26,1) 18ms both; }
+    .machine.slot-impact .roll { animation: ui-impact-right 410ms cubic-bezier(0.18,0.88,0.26,1) 62ms both; }
+    @keyframes ui-impact-left { 0%{transform:translate3d(0,0,0) scale(1)} 23%{transform:translate3d(1.2px,-0.8px,0) scale(1.006)} 49%{transform:translate3d(-0.8px,1px,0) scale(0.998)} 100%{transform:translate3d(0,0,0) scale(1)} }
+    @keyframes ui-impact-right { 0%{transform:translate3d(0,0,0) scale(1)} 19%{transform:translate3d(-1px,0.8px,0) scale(1.005)} 44%{transform:translate3d(1.3px,-0.6px,0) scale(0.999)} 100%{transform:translate3d(0,0,0) scale(1)} }
 
     @media (max-width: 430px) {
-      body {
-        padding: 8px;
-      }
-
-      .machine {
-        width: calc(100vw - 16px);
-        padding: 9px;
-      }
-
-      .hud {
-        gap: 7px;
-        min-height: 94px;
-      }
-
-      .score-card {
-        min-width: 0;
-        width: 100%;
-        height: 88px;
-      }
-
-      .score-label {
-        gap: 5px;
-        font-size: 17px;
-      }
-
-      .score-card strong {
-        font-size: 39px;
-      }
-
-      .logo {
-        width: 52px;
-        height: 52px;
-        padding: 5px;
-      }
-
-      .roll {
-        min-width: 126px;
-        width: 36vw;
-        height: 76px;
-      }
-
-      .roll-text strong {
-        font-size: 27px;
-      }
-
-      .roll-cost {
-        gap: 5px;
-        font-size: 14px;
-      }
-
-      .multipliers {
-        gap: 6px;
-      }
-
-      .multiplier {
-        height: 48px;
-      }
-    }
-
-    @media (max-width: 360px) {
-      body {
-        padding: 8px;
-      }
-
-      .machine {
-        width: min(100%, calc(100vw - 16px));
-        padding: 9px;
-      }
-
-      .hud {
-        gap: 6px;
-      }
-
-      .score-card {
-        min-width: 0;
-        width: 100%;
-        height: 80px;
-      }
-
-      .score-label {
-        font-size: 15px;
-      }
-
-      .score-card strong {
-        font-size: 34px;
-      }
-
-      .logo {
-        width: 48px;
-        height: 48px;
-        padding: 5px;
-      }
-
-      .roll {
-        min-width: 112px;
-        width: 34vw;
-        height: 70px;
-      }
-
-      .roll-text strong {
-        font-size: 24px;
-      }
-
-      .roll-cost {
-        font-size: 13px;
-      }
-    }
-
-    @media (max-height: 720px) {
-      .machine {
-        gap: 8px;
-      }
-
-      .hud {
-        min-height: 98px;
-      }
-
-      .score-card {
-        height: 82px;
-        border-radius: 18px;
-      }
-
-      .score-label {
-        font-size: 16px;
-      }
-
-      .score-card strong {
-        font-size: 36px;
-      }
-
-      .roll {
-        min-width: 116px;
-        height: 76px;
-      }
-
-      .roll-text strong {
-        font-size: 25px;
-      }
-
-      .roll-cost {
-        font-size: 14px;
-      }
-
-      .multipliers .multiplier {
-        height: 46px;
-      }
+      body { padding: 8px; }
+      .machine { width: calc(100vw - 16px); padding: 9px; }
+      .hud { gap: 7px; min-height: 94px; }
+      .score-card { height: 88px; }
+      .score-label { gap: 5px; font-size: 17px; }
+      .score-card strong { font-size: 39px; }
+      .roll { min-width: 126px; width: 36vw; height: 76px; }
+      .roll-text strong { font-size: 27px; }
+      .roll-cost { gap: 5px; font-size: 14px; }
+      .multipliers { gap: 6px; }
+      .multiplier { height: 48px; }
     }
   </style>
 </head>
 <body>
   <main class="machine">
-    <section class="board-frame" aria-label="Pachinko preview">
-      <div class="board-logo-plaque" aria-hidden="true">
-        <img src="Assets/logohills.png" alt="" />
-      </div>
-      <div class="board-blue-shell">
-        <div class="board-inner-frame">
-          <canvas id="game" width="720" height="960"></canvas>
-        </div>
-      </div>
+    <section class="board-frame" aria-label="Pachinko">
+      <div class="board-logo-plaque" aria-hidden="true"><img src="Assets/logohills.png" alt="" /></div>
+      <div class="board-blue-shell"><div class="board-inner-frame"><div id="playfield"></div></div></div>
     </section>
-
     <section class="hud" aria-label="Estado del juego">
-      <div class="score-card" aria-live="polite">
-        <div>
-          <span class="score-label">
-            <img class="paw-icon paw-blue" src="Assets/huella.png" alt="" />
-            PUNTOS
-            <img class="paw-icon paw-blue" src="Assets/huella.png" alt="" />
-          </span>
-          <strong id="points">150</strong>
-        </div>
-      </div>
-      <button id="roll" class="roll" type="button">
-        <span class="roll-text">
-          <strong>TIRAR</strong>
-          <span class="roll-cost">
-            <img class="paw-icon paw-white" src="Assets/huella.png" alt="" />
-            <span id="rollCost">15 pts</span>
-            <img class="paw-icon paw-white" src="Assets/huella.png" alt="" />
-          </span>
-        </span>
-      </button>
+      <div class="score-card" aria-live="polite"><div><span class="score-label"><img class="paw-icon paw-blue" src="Assets/huella.png" alt="" />PUNTOS<img class="paw-icon paw-blue" src="Assets/huella.png" alt="" /></span><strong id="points">150</strong></div></div>
+      <button id="roll" class="roll" type="button"><span class="roll-text"><strong>TIRAR</strong><span class="roll-cost"><img class="paw-icon paw-white" src="Assets/huella.png" alt="" /><span id="rollCost">15 pts</span><img class="paw-icon paw-white" src="Assets/huella.png" alt="" /></span></span></button>
     </section>
-
     <section class="multipliers" aria-label="Cantidad de bolas">
-      <button class="multiplier active" data-count="1" type="button">x1</button>
-      <button class="multiplier" data-count="2" type="button">x2</button>
-      <button class="multiplier" data-count="3" type="button">x3</button>
-      <button class="multiplier" data-count="5" type="button">x5</button>
-      <button class="multiplier" data-count="10" type="button">x10</button>
+      <button class="multiplier active" data-count="1" type="button">x1</button><button class="multiplier" data-count="2" type="button">x2</button><button class="multiplier" data-count="3" type="button">x3</button><button class="multiplier" data-count="5" type="button">x5</button><button class="multiplier" data-count="10" type="button">x10</button>
     </section>
-
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </main>
-
   <script>
-﻿(() => {
-  'use strict';
+    const LEVEL = {"version":1,"name":"nivel-base","units":"px","board":{"width":720,"height":960,"gravity":1.6,"ballRadius":10,"cornerRadius":60,"borderRestitution":3,"borderFriction":0.04},"spawn":{"x":360,"y":20},"objects":[{"id":"slot10i","type":"slot","x":64,"y":880,"w":128,"h":57,"angle":0,"value":"10i"},{"id":"peg-30393","type":"peg","x":252,"y":198,"r":7,"restitution":4},{"id":"peg-31096","type":"peg","x":468,"y":198,"r":7,"restitution":4},{"id":"peg-33525","type":"peg","x":522,"y":252,"r":7,"restitution":4},{"id":"peg-34128","type":"peg","x":198,"y":252,"r":7,"restitution":4},{"id":"peg-34924","type":"peg","x":260,"y":320,"r":7,"restitution":4},{"id":"peg-35997","type":"peg","x":480,"y":320,"r":7,"restitution":4},{"id":"peg-36984","type":"peg","x":234,"y":144,"r":7,"restitution":4},{"id":"peg-38461","type":"peg","x":162,"y":144,"r":7,"restitution":4},{"id":"peg-39887","type":"peg","x":90,"y":144,"r":7,"restitution":4},{"id":"peg-41708","type":"peg","x":486,"y":144,"r":7,"restitution":4},{"id":"peg-42969","type":"peg","x":558,"y":144,"r":7,"restitution":4},{"id":"peg-43388","type":"peg","x":630,"y":144,"r":7,"restitution":4},{"id":"peg-79625","type":"peg","x":180,"y":360,"r":7,"restitution":4},{"id":"peg-82686","type":"peg","x":540,"y":360,"r":7,"restitution":4},{"id":"peg-84268","type":"peg","x":594,"y":306,"r":7,"restitution":4},{"id":"peg-85421","type":"peg","x":126,"y":306,"r":7,"restitution":4},{"id":"peg-15286","type":"peg","x":360,"y":300,"r":7,"restitution":4},{"id":"peg-17195","type":"peg","x":300,"y":380,"r":7,"restitution":4},{"id":"peg-21747","type":"peg","x":420,"y":380,"r":7,"restitution":4},{"id":"peg-23116","type":"peg","x":480,"y":420,"r":7,"restitution":4},{"id":"peg-24287","type":"peg","x":240,"y":420,"r":7,"restitution":4},{"id":"peg-87419","type":"peg","x":520,"y":480,"r":7,"restitution":4},{"id":"peg-90300","type":"peg","x":640,"y":500,"r":7,"restitution":4},{"id":"peg-91085","type":"peg","x":600,"y":600,"r":7,"restitution":4},{"id":"peg-92886","type":"peg","x":80,"y":500,"r":7,"restitution":4},{"id":"peg-95998","type":"peg","x":200,"y":480,"r":7,"restitution":4},{"id":"peg-98911","type":"peg","x":120,"y":600,"r":7,"restitution":4},{"id":"peg-14334","type":"peg","x":360,"y":440,"r":7,"restitution":4},{"id":"bumper-29231","type":"bumper","x":240,"y":420,"r":30,"restitution":16},{"id":"bumper-52950","type":"bumper","x":480,"y":420,"r":30,"restitution":16},{"id":"peg-30660","type":"peg","x":160,"y":540,"r":7,"restitution":4},{"id":"peg-34424","type":"peg","x":560,"y":540,"r":7,"restitution":4},{"id":"peg-92712","type":"peg","x":640,"y":660,"r":7,"restitution":4},{"id":"peg-96889","type":"peg","x":80,"y":660,"r":7,"restitution":4},{"id":"peg-141508","type":"peg","x":320,"y":500,"r":7,"restitution":4},{"id":"peg-142877","type":"peg","x":400,"y":500,"r":7,"restitution":4},{"id":"peg-148215","type":"peg","x":240,"y":620,"r":7,"restitution":4},{"id":"peg-149656","type":"peg","x":480,"y":620,"r":7,"restitution":4},{"id":"peg-165149","type":"peg","x":280,"y":560,"r":7,"restitution":4},{"id":"peg-168299","type":"peg","x":440,"y":560,"r":7,"restitution":4},{"id":"bumper-178902","type":"bumper","x":360,"y":600,"r":30,"restitution":16},{"id":"bumper-186573","type":"bumper","x":434,"y":700,"r":30,"restitution":16},{"id":"bumper-188734","type":"bumper","x":286,"y":700,"r":30,"restitution":16},{"id":"bumper-191111","type":"bumper","x":80,"y":240,"r":30,"restitution":16},{"id":"bumper-192851","type":"bumper","x":640,"y":240,"r":30,"restitution":16},{"id":"bumper-195729","type":"bumper","x":360,"y":200,"r":30,"restitution":16},{"id":"slot20i","type":"slot","x":212,"y":880,"w":128,"h":57,"angle":0,"value":"20i"},{"id":"slot50","type":"slot","x":360,"y":880,"w":128,"h":57,"angle":0,"value":"50"},{"id":"separador","type":"wall","x":582,"y":850,"w":20,"h":120,"angle":180,"restitution":5},{"id":"slot20d","type":"slot","x":508,"y":880,"w":128,"h":57,"angle":0,"value":"20d"},{"id":"slot10d","type":"slot","x":656,"y":880,"w":128,"h":57,"angle":0,"value":"10d"},{"id":"piso","type":"wall","x":360,"y":934,"w":720,"h":51,"angle":0,"restitution":0.42},{"id":"separador1","type":"wall","x":434,"y":850,"w":20,"h":120,"angle":180,"restitution":5},{"id":"separador2","type":"wall","x":286,"y":850,"w":20,"h":120,"angle":180,"restitution":5},{"id":"separador3","type":"wall","x":138,"y":850,"w":20,"h":120,"angle":180,"restitution":5}]};
+    const CONFIG = { ballCost: 15, startingPoints: 150, physicsStep: 1000 / 60, timeScale: 1, maxSteps: 3, gravityScale: 1400, gridSize: 96, maxBallSpeed: 1800 };
+    const ASSETS = { ball:'Assets/ball.png', peg:'Assets/pin.png', bumper:'Assets/bumper.png', divider:'Assets/slot-divider.png', floor:'Assets/piso.png', slot10:'Assets/slot-10.png', slot20:'Assets/slot-20.png', slot50:'Assets/slot-50.png' };
+    const SFX = { bumper:'Assets/bumper.mp3', button:'Assets/button.mp3', newball:'Assets/newball.mp3', slot:'Assets/slot.mp3' };
+    const playfield = document.getElementById('playfield');
+    const pointsEl = document.getElementById('points');
+    const rollButton = document.getElementById('roll');
+    const rollCostEl = document.getElementById('rollCost');
+    const toastEl = document.getElementById('toast');
+    const machineEl = document.querySelector('.machine');
+    const isTouch = window.matchMedia?.('(pointer: coarse)')?.matches || navigator.maxTouchPoints > 0;
+    const state = { level: LEVEL, points: CONFIG.startingPoints, selectedCount: 1, scale: 1, balls: [], nextBallId: 1, colliders: [], slots: [], grid: new Map(), objectEls: new Map(), ballEls: new Map(), rewards: [], lastFrameAt: null, acc: 0, raf: null, sfx: {}, timers: {} };
 
-  const LEVEL = {
-  "version": 1,
-  "name": "nivel-base",
-  "units": "px",
-  "board": {
-    "width": 720,
-    "height": 960,
-    "gravity": 0.5,
-    "ballRadius": 10,
-    "cornerRadius": 60,
-    "borderRestitution": 3,
-    "borderFriction": 0.04
-  },
-  "spawn": {
-    "x": 360,
-    "y": 20
-  },
-  "objects": [
-    {
-      "id": "slot10i",
-      "type": "slot",
-      "x": 64,
-      "y": 880,
-      "w": 128,
-      "h": 57,
-      "angle": 0,
-      "value": "10i"
-    },
-    {
-      "id": "peg-30393",
-      "type": "peg",
-      "x": 252,
-      "y": 198,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-31096",
-      "type": "peg",
-      "x": 468,
-      "y": 198,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-33525",
-      "type": "peg",
-      "x": 522,
-      "y": 252,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-34128",
-      "type": "peg",
-      "x": 198,
-      "y": 252,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-34924",
-      "type": "peg",
-      "x": 260,
-      "y": 320,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-35997",
-      "type": "peg",
-      "x": 480,
-      "y": 320,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-36984",
-      "type": "peg",
-      "x": 234,
-      "y": 144,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-38461",
-      "type": "peg",
-      "x": 162,
-      "y": 144,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-39887",
-      "type": "peg",
-      "x": 90,
-      "y": 144,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-41708",
-      "type": "peg",
-      "x": 486,
-      "y": 144,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-42969",
-      "type": "peg",
-      "x": 558,
-      "y": 144,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-43388",
-      "type": "peg",
-      "x": 630,
-      "y": 144,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-79625",
-      "type": "peg",
-      "x": 180,
-      "y": 360,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-82686",
-      "type": "peg",
-      "x": 540,
-      "y": 360,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-84268",
-      "type": "peg",
-      "x": 594,
-      "y": 306,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-85421",
-      "type": "peg",
-      "x": 126,
-      "y": 306,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-15286",
-      "type": "peg",
-      "x": 360,
-      "y": 300,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-17195",
-      "type": "peg",
-      "x": 300,
-      "y": 380,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-21747",
-      "type": "peg",
-      "x": 420,
-      "y": 380,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-23116",
-      "type": "peg",
-      "x": 480,
-      "y": 420,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-24287",
-      "type": "peg",
-      "x": 240,
-      "y": 420,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-87419",
-      "type": "peg",
-      "x": 520,
-      "y": 480,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-90300",
-      "type": "peg",
-      "x": 640,
-      "y": 500,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-91085",
-      "type": "peg",
-      "x": 600,
-      "y": 600,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-92886",
-      "type": "peg",
-      "x": 80,
-      "y": 500,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-95998",
-      "type": "peg",
-      "x": 200,
-      "y": 480,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-98911",
-      "type": "peg",
-      "x": 120,
-      "y": 600,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-14334",
-      "type": "peg",
-      "x": 360,
-      "y": 440,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "bumper-29231",
-      "type": "bumper",
-      "x": 240,
-      "y": 420,
-      "r": 30,
-      "restitution": 16
-    },
-    {
-      "id": "bumper-52950",
-      "type": "bumper",
-      "x": 480,
-      "y": 420,
-      "r": 30,
-      "restitution": 16
-    },
-    {
-      "id": "peg-30660",
-      "type": "peg",
-      "x": 160,
-      "y": 540,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-34424",
-      "type": "peg",
-      "x": 560,
-      "y": 540,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-92712",
-      "type": "peg",
-      "x": 640,
-      "y": 660,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-96889",
-      "type": "peg",
-      "x": 80,
-      "y": 660,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-141508",
-      "type": "peg",
-      "x": 320,
-      "y": 500,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-142877",
-      "type": "peg",
-      "x": 400,
-      "y": 500,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-148215",
-      "type": "peg",
-      "x": 240,
-      "y": 620,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-149656",
-      "type": "peg",
-      "x": 480,
-      "y": 620,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-165149",
-      "type": "peg",
-      "x": 280,
-      "y": 560,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "peg-168299",
-      "type": "peg",
-      "x": 440,
-      "y": 560,
-      "r": 7,
-      "restitution": 4
-    },
-    {
-      "id": "bumper-178902",
-      "type": "bumper",
-      "x": 360,
-      "y": 600,
-      "r": 30,
-      "restitution": 16
-    },
-    {
-      "id": "bumper-186573",
-      "type": "bumper",
-      "x": 434,
-      "y": 700,
-      "r": 30,
-      "restitution": 16
-    },
-    {
-      "id": "bumper-188734",
-      "type": "bumper",
-      "x": 286,
-      "y": 700,
-      "r": 30,
-      "restitution": 16
-    },
-    {
-      "id": "bumper-191111",
-      "type": "bumper",
-      "x": 80,
-      "y": 240,
-      "r": 30,
-      "restitution": 16
-    },
-    {
-      "id": "bumper-192851",
-      "type": "bumper",
-      "x": 640,
-      "y": 240,
-      "r": 30,
-      "restitution": 16
-    },
-    {
-      "id": "bumper-195729",
-      "type": "bumper",
-      "x": 360,
-      "y": 200,
-      "r": 30,
-      "restitution": 16
-    },
-    {
-      "id": "slot20i",
-      "type": "slot",
-      "x": 212,
-      "y": 880,
-      "w": 128,
-      "h": 57,
-      "angle": 0,
-      "value": "20i"
-    },
-    {
-      "id": "slot50",
-      "type": "slot",
-      "x": 360,
-      "y": 880,
-      "w": 128,
-      "h": 57,
-      "angle": 0,
-      "value": "50"
-    },
-    {
-      "id": "separador",
-      "type": "wall",
-      "x": 582,
-      "y": 850,
-      "w": 20,
-      "h": 120,
-      "angle": 180,
-      "restitution": 5
-    },
-    {
-      "id": "slot20d",
-      "type": "slot",
-      "x": 508,
-      "y": 880,
-      "w": 128,
-      "h": 57,
-      "angle": 0,
-      "value": "20d"
-    },
-    {
-      "id": "slot10d",
-      "type": "slot",
-      "x": 656,
-      "y": 880,
-      "w": 128,
-      "h": 57,
-      "angle": 0,
-      "value": "10d"
-    },
-    {
-      "id": "piso",
-      "type": "wall",
-      "x": 360,
-      "y": 934,
-      "w": 720,
-      "h": 51,
-      "angle": 0,
-      "restitution": 0.42
-    },
-    {
-      "id": "separador1",
-      "type": "wall",
-      "x": 434,
-      "y": 850,
-      "w": 20,
-      "h": 120,
-      "angle": 180,
-      "restitution": 5
-    },
-    {
-      "id": "separador2",
-      "type": "wall",
-      "x": 286,
-      "y": 850,
-      "w": 20,
-      "h": 120,
-      "angle": 180,
-      "restitution": 5
-    },
-    {
-      "id": "separador3",
-      "type": "wall",
-      "x": 138,
-      "y": 850,
-      "w": 20,
-      "h": 120,
-      "angle": 180,
-      "restitution": 5
+    function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+    function len(x,y){return Math.hypot(x,y)||1;}
+    function degToRad(d){return (Number(d)||0)*Math.PI/180;}
+    function key(x,y){return String(x)+','+String(y);}
+    function slotPoints(v){const m=String(v).match(/\d+/);return m?Number(m[0]):0;}
+    function fmt(v){return Math.max(0,Math.floor(v)).toLocaleString('es-CO');}
+    function cost(){return state.selectedCount*CONFIG.ballCost;}
+
+    function makeSfx(){ state.sfx = Object.fromEntries(Object.entries(SFX).map(([name,src]) => [name,{i:0,pool:Array.from({length:name==='bumper'?6:3},()=>{const a=new Audio(src);a.preload='auto';a.volume=name==='button'?0.42:name==='bumper'?0.58:0.7;return a;})}])); }
+    function playSfx(name, volume=1){const s=state.sfx[name]; if(!s)return; const a=s.pool[s.i]; s.i=(s.i+1)%s.pool.length; try{a.pause();a.currentTime=0;a.volume=clamp(volume*(name==='button'?0.42:name==='bumper'?0.58:0.7),0,1);a.play().catch(()=>{});}catch(_){}}
+
+    function objImg(obj){ if(obj.type==='peg')return ASSETS.peg; if(obj.type==='bumper')return ASSETS.bumper; if(obj.id==='piso')return ASSETS.floor; if(obj.type==='wall')return ASSETS.divider; if(obj.type==='slot')return String(obj.value).startsWith('10')?ASSETS.slot10:String(obj.value).startsWith('20')?ASSETS.slot20:ASSETS.slot50; return ''; }
+    function setBox(el,x,y,w,h,angle=0){
+      const s=state.scale;
+      el.style.width=(w*s)+'px';
+      el.style.height=(h*s)+'px';
+      el.style.transform='translate3d('+((x-w/2)*s)+'px,'+((y-h/2)*s)+'px,0) rotate('+angle+'deg)';
     }
-  ]
-};
-
-  const CONFIG = {
-    ballCost: 15,
-    startingPoints: 150,
-    physicsStep: 1000 / 60,
-    timeScale: 1.6,
-    maxSteps: 4,
-    gravityScale: 1400,
-    gridSize: 96,
-    maxBallSpeed: 1450,
-    mobileDpr: 1.35,
-    desktopDpr: 1.75,
-    trailLimit: 12
-  };
-
-  const assetPaths = {
-    board: 'Assets/board-bg.png',
-    ball: 'Assets/ball.png',
-    peg: 'Assets/pin.png',
-    bumper: 'Assets/bumper.png',
-    divider: 'Assets/slot-divider.png',
-    floor: 'Assets/piso.png',
-    slot10: 'Assets/slot-10.png',
-    slot20: 'Assets/slot-20.png',
-    slot50: 'Assets/slot-50.png'
-  };
-
-  const sfxPaths = {
-    bumper: 'Assets/bumper.mp3',
-    button: 'Assets/button.mp3',
-    newball: 'Assets/newball.mp3',
-    slot: 'Assets/slot.mp3'
-  };
-
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const pointsEl = document.getElementById('points');
-  const rollButton = document.getElementById('roll');
-  const rollCostEl = document.getElementById('rollCost');
-  const toastEl = document.getElementById('toast');
-  const machineEl = document.querySelector('.machine');
-  const isTouchDevice = window.matchMedia?.('(pointer: coarse)')?.matches || navigator.maxTouchPoints > 0;
-  const renderDpr = Math.min(window.devicePixelRatio || 1, isTouchDevice ? CONFIG.mobileDpr : CONFIG.desktopDpr);
-
-  const state = {
-    level: LEVEL,
-    images: {},
-    sprites: {},
-    points: CONFIG.startingPoints,
-    selectedCount: 1,
-    balls: [],
-    nextBallId: 1,
-    colliders: [],
-    slotSensors: [],
-    grid: new Map(),
-    objectGroups: { slots: [], walls: [], pegs: [], bumpers: [] },
-    bumperHits: new Map(),
-    slotHits: new Map(),
-    trails: new Map(),
-    raf: null,
-    lastFrameAt: null,
-    accumulator: 0,
-    renderScale: 1,
-    staticLayer: null,
-    sfx: {},
-    timers: { slot: null, bumper: null }
-  };
-
-  function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
-  function degToRad(deg) { return (Number(deg) || 0) * Math.PI / 180; }
-  function length(x, y) { return Math.hypot(x, y) || 1; }
-  function now() { return performance.now(); }
-
-  function loadImage(src) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = src;
-    });
-  }
-
-  function makeFallbackSfx() {
-    state.sfx = Object.fromEntries(Object.entries(sfxPaths).map(([name, src]) => [name, {
-      index: 0,
-      pool: Array.from({ length: name === 'bumper' ? 6 : 3 }, () => {
-        const audio = new Audio(src);
-        audio.preload = 'auto';
-        audio.volume = name === 'button' ? 0.42 : name === 'bumper' ? 0.58 : 0.7;
-        return audio;
-      })
-    }]));
-  }
-
-  function playSfx(name, volume = 1) {
-    const sound = state.sfx[name];
-    if (!sound) return;
-    const audio = sound.pool[sound.index];
-    sound.index = (sound.index + 1) % sound.pool.length;
-    try {
-      audio.pause();
-      audio.currentTime = 0;
-      audio.volume = clamp(volume * (name === 'button' ? 0.42 : name === 'bumper' ? 0.58 : 0.7), 0, 1);
-      audio.play().catch(() => {});
-    } catch (_) {}
-  }
-
-  function drawRoundRect(context, x, y, w, h, r) {
-    const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
-    context.beginPath();
-    context.moveTo(x + radius, y);
-    context.arcTo(x + w, y, x + w, y + h, radius);
-    context.arcTo(x + w, y + h, x, y + h, radius);
-    context.arcTo(x, y + h, x, y, radius);
-    context.arcTo(x, y, x + w, y, radius);
-    context.closePath();
-  }
-
-  function drawImageCentered(context, img, x, y, w, h, angle = 0) {
-    if (!img) return;
-    context.save();
-    context.translate(x, y);
-    context.rotate(degToRad(angle));
-    context.drawImage(img, -w / 2, -h / 2, w, h);
-    context.restore();
-  }
-
-  function imageForObject(obj) {
-    if (obj.type === 'peg') return state.sprites.peg;
-    if (obj.type === 'bumper') return state.sprites.bumper;
-    if (obj.id === 'piso') return state.sprites.floor;
-    if (obj.type === 'wall') return state.sprites.divider;
-    if (obj.type === 'slot') {
-      if (String(obj.value).startsWith('10')) return state.sprites.slot10;
-      if (String(obj.value).startsWith('20')) return state.sprites.slot20;
-      return state.sprites.slot50;
-    }
-    return null;
-  }
-
-  function resampleImage(img, width, height) {
-    const targetWidth = Math.max(1, Math.round(width));
-    const targetHeight = Math.max(1, Math.round(height));
-    const canvasEl = document.createElement('canvas');
-    canvasEl.width = targetWidth;
-    canvasEl.height = targetHeight;
-    const c = canvasEl.getContext('2d');
-    c.imageSmoothingEnabled = true;
-    c.imageSmoothingQuality = isTouchDevice ? 'medium' : 'high';
-    c.drawImage(img, 0, 0, targetWidth, targetHeight);
-    return canvasEl;
-  }
-
-  function maxObjectSize(predicate, fallback) {
-    const size = state.level.objects.reduce((acc, obj) => {
-      if (!predicate(obj)) return acc;
-      const w = obj.r ? obj.r * 2 : obj.w || 0;
-      const h = obj.r ? obj.r * 2 : obj.h || 0;
-      return { w: Math.max(acc.w, w), h: Math.max(acc.h, h) };
-    }, { w: 0, h: 0 });
-    return { w: size.w || fallback.w, h: size.h || fallback.h };
-  }
-
-  function makeSprites() {
-    const spriteScale = isTouchDevice ? 2 : 2.5;
-    const ball = { w: state.level.board.ballRadius * 2, h: state.level.board.ballRadius * 2 };
-    const peg = maxObjectSize((obj) => obj.type === 'peg', { w: 14, h: 14 });
-    const bumper = maxObjectSize((obj) => obj.type === 'bumper', { w: 60, h: 60 });
-    const divider = maxObjectSize((obj) => obj.type === 'wall' && obj.id !== 'piso', { w: 20, h: 120 });
-    const floor = maxObjectSize((obj) => obj.id === 'piso', { w: state.level.board.width, h: 51 });
-    const slot10 = maxObjectSize((obj) => obj.type === 'slot' && String(obj.value).startsWith('10'), { w: 128, h: 57 });
-    const slot20 = maxObjectSize((obj) => obj.type === 'slot' && String(obj.value).startsWith('20'), { w: 128, h: 57 });
-    const slot50 = maxObjectSize((obj) => obj.type === 'slot' && String(obj.value) === '50', { w: 128, h: 57 });
-    state.sprites = {
-      ball: resampleImage(state.images.ball, ball.w * spriteScale, ball.h * spriteScale),
-      peg: resampleImage(state.images.peg, peg.w * spriteScale, peg.h * spriteScale),
-      bumper: resampleImage(state.images.bumper, bumper.w * spriteScale, bumper.h * spriteScale),
-      divider: resampleImage(state.images.divider, divider.w * spriteScale, divider.h * spriteScale),
-      floor: resampleImage(state.images.floor, floor.w * spriteScale, floor.h * spriteScale),
-      slot10: resampleImage(state.images.slot10, slot10.w * spriteScale, slot10.h * spriteScale),
-      slot20: resampleImage(state.images.slot20, slot20.w * spriteScale, slot20.h * spriteScale),
-      slot50: resampleImage(state.images.slot50, slot50.w * spriteScale, slot50.h * spriteScale)
-    };
-  }
-
-  function prepareGroups() {
-    state.objectGroups = {
-      slots: state.level.objects.filter((obj) => obj.type === 'slot'),
-      walls: state.level.objects.filter((obj) => obj.type === 'wall'),
-      pegs: state.level.objects.filter((obj) => obj.type === 'peg'),
-      bumpers: state.level.objects.filter((obj) => obj.type === 'bumper')
-    };
-  }
-
-  function colliderRadius(collider) {
-    if (collider.kind === 'circle') return collider.r;
-    return Math.hypot(collider.w, collider.h) / 2;
-  }
-
-  function gridKey(cx, cy) { return String(cx) + "," + String(cy); }
-
-  function addToGrid(collider) {
-    const r = colliderRadius(collider) + state.level.board.ballRadius + 6;
-    const minX = Math.floor((collider.x - r) / CONFIG.gridSize);
-    const maxX = Math.floor((collider.x + r) / CONFIG.gridSize);
-    const minY = Math.floor((collider.y - r) / CONFIG.gridSize);
-    const maxY = Math.floor((collider.y + r) / CONFIG.gridSize);
-    for (let y = minY; y <= maxY; y += 1) {
-      for (let x = minX; x <= maxX; x += 1) {
-        const key = gridKey(x, y);
-        if (!state.grid.has(key)) state.grid.set(key, []);
-        state.grid.get(key).push(collider);
-      }
-    }
-  }
-
-  function makeCollider(obj) {
-    const restitution = obj.type === 'bumper'
-      ? 1.35
-      : obj.type === 'peg'
-        ? 0.72
-        : 0.64;
-    if (obj.type === 'peg' || obj.type === 'bumper') {
-      return { kind: 'circle', obj, x: obj.x, y: obj.y, r: obj.r, restitution };
-    }
-    if (obj.type === 'wall') {
-      return { kind: 'box', obj, x: obj.x, y: obj.y, w: obj.w, h: obj.h, angle: degToRad(obj.angle || 0), restitution: 0.62 };
-    }
-    return null;
-  }
-
-  function makeSlotSensor(obj) {
-    return { obj, x: obj.x, y: obj.y, w: obj.w, h: obj.h, angle: degToRad(obj.angle || 0) };
-  }
-
-  function buildCollisionWorld() {
-    state.colliders = [];
-    state.slotSensors = state.objectGroups.slots.map(makeSlotSensor);
-    state.grid = new Map();
-    [...state.objectGroups.pegs, ...state.objectGroups.bumpers, ...state.objectGroups.walls].forEach((obj) => {
-      const collider = makeCollider(obj);
-      if (!collider) return;
-      state.colliders.push(collider);
-      addToGrid(collider);
-    });
-  }
-
-  function queryColliders(ball) {
-    const seen = new Set();
-    const result = [];
-    const radius = ball.r + 110;
-    const minX = Math.floor((ball.x - radius) / CONFIG.gridSize);
-    const maxX = Math.floor((ball.x + radius) / CONFIG.gridSize);
-    const minY = Math.floor((ball.y - radius) / CONFIG.gridSize);
-    const maxY = Math.floor((ball.y + radius) / CONFIG.gridSize);
-    for (let y = minY; y <= maxY; y += 1) {
-      for (let x = minX; x <= maxX; x += 1) {
-        const list = state.grid.get(gridKey(x, y));
-        if (!list) continue;
-        list.forEach((collider) => {
-          if (seen.has(collider)) return;
-          seen.add(collider);
-          result.push(collider);
-        });
-      }
-    }
-    return result;
-  }
-
-  function reflectVelocity(ball, nx, ny, restitution) {
-    const vn = ball.vx * nx + ball.vy * ny;
-    if (vn >= 0) return;
-    const impulse = -(1 + restitution) * vn;
-    ball.vx += impulse * nx;
-    ball.vy += impulse * ny;
-  }
-
-  function resolveCircle(ball, collider) {
-    const dx = ball.x - collider.x;
-    const dy = ball.y - collider.y;
-    const dist = length(dx, dy);
-    const minDist = ball.r + collider.r;
-    if (dist >= minDist) return false;
-    const nx = dx / dist;
-    const ny = dy / dist;
-    const overlap = minDist - dist;
-    ball.x += nx * overlap;
-    ball.y += ny * overlap;
-    reflectVelocity(ball, nx, ny, collider.restitution);
-
-    if (collider.obj.type === 'bumper') {
-      const boost = 260;
-      ball.vx += nx * boost;
-      ball.vy += ny * boost;
-      recordBumperHit(collider.obj);
-    }
-    return true;
-  }
-
-  function resolveBox(ball, collider) {
-    const c = Math.cos(-collider.angle);
-    const s = Math.sin(-collider.angle);
-    const dx = ball.x - collider.x;
-    const dy = ball.y - collider.y;
-    const lx = dx * c - dy * s;
-    const ly = dx * s + dy * c;
-    const hw = collider.w / 2;
-    const hh = collider.h / 2;
-    const closestX = clamp(lx, -hw, hw);
-    const closestY = clamp(ly, -hh, hh);
-    let nxLocal = lx - closestX;
-    let nyLocal = ly - closestY;
-    let distSq = nxLocal * nxLocal + nyLocal * nyLocal;
-
-    if (distSq > ball.r * ball.r) return false;
-
-    if (distSq < 0.0001) {
-      const edgeX = hw - Math.abs(lx);
-      const edgeY = hh - Math.abs(ly);
-      if (edgeX < edgeY) {
-        nxLocal = Math.sign(lx) || 1;
-        nyLocal = 0;
-      } else {
-        nxLocal = 0;
-        nyLocal = Math.sign(ly) || -1;
-      }
-      distSq = 1;
+    function setBallEl(el,b){
+      const s=state.scale;
+      const d=b.r*2;
+      el.style.width=(d*s)+'px';
+      el.style.height=(d*s)+'px';
+      el.style.transform='translate3d('+((b.x-b.r)*s)+'px,'+((b.y-b.r)*s)+'px,0) rotate('+b.angle+'rad)';
     }
 
-    const dist = Math.sqrt(distSq);
-    const localNx = nxLocal / dist;
-    const localNy = nyLocal / dist;
-    const cos = Math.cos(collider.angle);
-    const sin = Math.sin(collider.angle);
-    const nx = localNx * cos - localNy * sin;
-    const ny = localNx * sin + localNy * cos;
-    const overlap = ball.r - dist;
-    ball.x += nx * overlap;
-    ball.y += ny * overlap;
-    reflectVelocity(ball, nx, ny, collider.restitution);
-    return true;
-  }
-
-  function insideBoxSensor(ball, sensor) {
-    const c = Math.cos(-sensor.angle);
-    const s = Math.sin(-sensor.angle);
-    const dx = ball.x - sensor.x;
-    const dy = ball.y - sensor.y;
-    const lx = dx * c - dy * s;
-    const ly = dx * s + dy * c;
-    return Math.abs(lx) <= sensor.w / 2 && Math.abs(ly) <= sensor.h / 2;
-  }
-
-  function resolveBoard(ball) {
-    const board = state.level.board;
-    const left = ball.r;
-    const right = board.width - ball.r;
-    const top = ball.r;
-    const bottom = board.height + ball.r * 2;
-    const bounce = 0.72;
-    if (ball.x < left) { ball.x = left; if (ball.vx < 0) ball.vx = -ball.vx * bounce; }
-    if (ball.x > right) { ball.x = right; if (ball.vx > 0) ball.vx = -ball.vx * bounce; }
-    if (ball.y < top) { ball.y = top; if (ball.vy < 0) ball.vy = -ball.vy * bounce; }
-    if (ball.y > bottom) ball.dead = true;
-  }
-
-  function stepBall(ball, dt) {
-    const gravity = state.level.board.gravity * CONFIG.gravityScale;
-    ball.vy += gravity * dt;
-    ball.vx *= 0.999;
-    ball.vy *= 0.999;
-    const speed = Math.hypot(ball.vx, ball.vy);
-    if (speed > CONFIG.maxBallSpeed) {
-      const scale = CONFIG.maxBallSpeed / speed;
-      ball.vx *= scale;
-      ball.vy *= scale;
-    }
-    ball.x += ball.vx * dt;
-    ball.y += ball.vy * dt;
-
-    const nearby = queryColliders(ball);
-    for (let pass = 0; pass < 2; pass += 1) {
-      nearby.forEach((collider) => {
-        if (collider.kind === 'circle') resolveCircle(ball, collider);
-        else resolveBox(ball, collider);
+    function buildDom(){
+      playfield.innerHTML=''; state.objectEls.clear();
+      LEVEL.objects.forEach(obj=>{
+        const img=objImg(obj); if(!img)return;
+        const el=document.createElement('img'); el.src=img; el.className='entity static '+obj.type+(obj.id==='piso'?' piso':''); el.decoding='async';
+        if(obj.type==='peg'||obj.type==='bumper') setBox(el,obj.x,obj.y,obj.r*2,obj.r*2,0);
+        else if(obj.type==='wall'&&obj.id!=='piso') setBox(el,obj.x,obj.y,Math.min(obj.w,obj.h),Math.max(obj.w,obj.h),0);
+        else setBox(el,obj.x,obj.y,obj.w,obj.h,obj.angle||0);
+        if(obj.type==='slot') el.classList.add('slot');
+        if(obj.type==='peg') el.classList.add('peg');
+        if(obj.type==='bumper') el.classList.add('bumper');
+        if(obj.type==='wall') el.classList.add('wall');
+        playfield.appendChild(el); state.objectEls.set(obj.id,el);
       });
     }
 
-    resolveBoard(ball);
+    function colliderRadius(c){return c.kind==='circle'?c.r:Math.hypot(c.w,c.h)/2;}
+    function addGrid(c){const r=colliderRadius(c)+LEVEL.board.ballRadius+6; const minX=Math.floor((c.x-r)/CONFIG.gridSize),maxX=Math.floor((c.x+r)/CONFIG.gridSize),minY=Math.floor((c.y-r)/CONFIG.gridSize),maxY=Math.floor((c.y+r)/CONFIG.gridSize); for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){const k=key(x,y); if(!state.grid.has(k))state.grid.set(k,[]); state.grid.get(k).push(c);}}
+    function makeCollider(obj){ const rest=obj.type==='bumper'?1.35:obj.type==='peg'?0.72:0.62; if(obj.type==='peg'||obj.type==='bumper')return{kind:'circle',obj,x:obj.x,y:obj.y,r:obj.r,restitution:rest}; if(obj.type==='wall')return{kind:'box',obj,x:obj.x,y:obj.y,w:obj.w,h:obj.h,angle:degToRad(obj.angle||0),restitution:0.62}; return null; }
+    function buildWorld(){ state.colliders=[]; state.slots=[]; state.grid=new Map(); LEVEL.objects.forEach(obj=>{ if(obj.type==='slot')state.slots.push({obj,x:obj.x,y:obj.y,w:obj.w,h:obj.h,angle:degToRad(obj.angle||0)}); const c=makeCollider(obj); if(c){state.colliders.push(c); addGrid(c);} }); }
+    function query(b){const seen=new Set(),out=[]; const r=b.r+110; const minX=Math.floor((b.x-r)/CONFIG.gridSize),maxX=Math.floor((b.x+r)/CONFIG.gridSize),minY=Math.floor((b.y-r)/CONFIG.gridSize),maxY=Math.floor((b.y+r)/CONFIG.gridSize); for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){const list=state.grid.get(key(x,y)); if(!list)continue; list.forEach(c=>{if(!seen.has(c)){seen.add(c);out.push(c);}});} return out;}
+    function reflect(b,nx,ny,rest){const vn=b.vx*nx+b.vy*ny; if(vn>=0)return; const imp=-(1+rest)*vn; b.vx+=imp*nx; b.vy+=imp*ny;}
+    function hitCircle(b,c){const dx=b.x-c.x,dy=b.y-c.y,d=len(dx,dy),m=b.r+c.r; if(d>=m)return; const nx=dx/d,ny=dy/d; b.x+=nx*(m-d); b.y+=ny*(m-d); reflect(b,nx,ny,c.restitution); if(c.obj.type==='bumper'){b.vx+=nx*260;b.vy+=ny*260;recordBumper(c.obj);}}
+    function hitBox(b,c){const co=Math.cos(-c.angle),si=Math.sin(-c.angle),dx=b.x-c.x,dy=b.y-c.y,lx=dx*co-dy*si,ly=dx*si+dy*co,hw=c.w/2,hh=c.h/2,cx=clamp(lx,-hw,hw),cy=clamp(ly,-hh,hh); let nxL=lx-cx,nyL=ly-cy,ds=nxL*nxL+nyL*nyL; if(ds>b.r*b.r)return; if(ds<0.0001){const ex=hw-Math.abs(lx),ey=hh-Math.abs(ly); if(ex<ey){nxL=Math.sign(lx)||1;nyL=0;}else{nxL=0;nyL=Math.sign(ly)||-1;}ds=1;} const d=Math.sqrt(ds),lnx=nxL/d,lny=nyL/d,cos=Math.cos(c.angle),sin=Math.sin(c.angle),nx=lnx*cos-lny*sin,ny=lnx*sin+lny*cos; b.x+=nx*(b.r-d); b.y+=ny*(b.r-d); reflect(b,nx,ny,c.restitution);}
+    function inSlot(b,sens){const co=Math.cos(-sens.angle),si=Math.sin(-sens.angle),dx=b.x-sens.x,dy=b.y-sens.y,lx=dx*co-dy*si,ly=dx*si+dy*co; return Math.abs(lx)<=sens.w/2&&Math.abs(ly)<=sens.h/2;}
+    function stepBall(b,dt){b.vy+=LEVEL.board.gravity*CONFIG.gravityScale*dt; b.vx*=0.999; b.vy*=0.999; const sp=Math.hypot(b.vx,b.vy); if(sp>CONFIG.maxBallSpeed){const sc=CONFIG.maxBallSpeed/sp;b.vx*=sc;b.vy*=sc;} b.x+=b.vx*dt; b.y+=b.vy*dt; const near=query(b); for(let p=0;p<2;p++)near.forEach(c=>c.kind==='circle'?hitCircle(b,c):hitBox(b,c)); if(b.x<b.r){b.x=b.r;b.vx=Math.abs(b.vx)*0.72;} if(b.x>LEVEL.board.width-b.r){b.x=LEVEL.board.width-b.r;b.vx=-Math.abs(b.vx)*0.72;} if(b.y< b.r){b.y=b.r;b.vy=Math.abs(b.vy)*0.72;} if(b.y>LEVEL.board.height+b.r*2)b.dead=true; for(const s of state.slots){if(inSlot(b,s)){score(b,s.obj);break;}}}
 
-    for (const sensor of state.slotSensors) {
-      if (insideBoxSensor(ball, sensor)) {
-        scoreBall(ball, sensor.obj);
-        break;
+    function updateHud(){pointsEl.textContent=fmt(state.points); rollCostEl.textContent=cost()+' pts'; rollButton.disabled=state.points<cost(); document.querySelectorAll('.multiplier').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.count)===state.selectedCount));}
+    let toastTimer=null; function showToast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1400);}
+    function trigger(cls,dur){machineEl.classList.remove(cls); void machineEl.offsetWidth; machineEl.classList.add(cls); clearTimeout(state.timers[cls]); state.timers[cls]=setTimeout(()=>machineEl.classList.remove(cls),dur);}
+    function recordBumper(obj){
+      const el=state.objectEls.get(obj.id);
+      if(el){
+        setBox(el,obj.x,obj.y,obj.r*2.34,obj.r*2.34,0);
+        clearTimeout(el._hitTimer);
+        el._hitTimer=setTimeout(()=>setBox(el,obj.x,obj.y,obj.r*2,obj.r*2,0),75);
       }
+      playSfx('bumper',0.75);
     }
-  }
+    function rewardText(slot){const el=document.createElement('div'); el.className='reward'; el.textContent='+'+slotPoints(slot.value); el.style.color=String(slot.value).startsWith('10')?'#d47b3f':String(slot.value).startsWith('20')?'#dce7ef':'#ffd166'; playfield.appendChild(el); state.rewards.push({el,x:slot.x,y:slot.y-30,age:0});}
+    function score(b,slot){if(b.dead)return; b.dead=true; state.points+=slotPoints(slot.value); playSfx('slot'); rewardText(slot); trigger('slot-impact',520); updateHud();}
+    function spawnBall(x=LEVEL.spawn.x){playSfx('newball',0.85); const b={id:state.nextBallId++,x,y:LEVEL.spawn.y,vx:(Math.random()-0.5)*90,vy:0,r:LEVEL.board.ballRadius,angle:0,spin:(Math.random()-0.5)*6,dead:false}; const el=document.createElement('img'); el.src=ASSETS.ball; el.className='entity ball'; el.decoding='async'; setBallEl(el,b); playfield.appendChild(el); state.ballEls.set(b.id,el); state.balls.push(b);}
+    function roll(){playSfx('button',0.9); const c=cost(); if(state.points<c){showToast('Puntos insuficientes');return;} state.points-=c; updateHud(); const n=state.selectedCount; for(let i=0;i<n;i++)setTimeout(()=>spawnBall(LEVEL.spawn.x+(Math.random()-0.5)*Math.min(20,5+n*1.2)),i*85);}
 
-  function slotPoints(value) {
-    const match = String(value).match(/\d+/);
-    return match ? Number(match[0]) : 0;
-  }
-
-  function formatPoints(value) {
-    return Math.max(0, Math.floor(value)).toLocaleString('es-CO');
-  }
-
-  function currentCost() { return state.selectedCount * CONFIG.ballCost; }
-
-  function updateHud() {
-    pointsEl.textContent = formatPoints(state.points);
-    rollCostEl.textContent = String(currentCost()) + " pts";
-    rollButton.disabled = state.points < currentCost();
-    document.querySelectorAll('.multiplier').forEach((button) => {
-      const count = Number(button.dataset.count);
-      button.classList.toggle('active', count === state.selectedCount);
-    });
-  }
-
-  let toastTimer = null;
-  function showToast(message) {
-    toastEl.textContent = message;
-    toastEl.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1400);
-  }
-
-  function recordSlotHit(slot) {
-    state.slotHits.set(slot.id, now());
-    playSfx('slot');
-    triggerClass('slot-impact', 520);
-  }
-
-  function recordBumperHit(obj) {
-    const last = state.bumperHits.get(obj.id) || 0;
-    const t = now();
-    state.bumperHits.set(obj.id, t);
-    if (t - last > 55) playSfx('bumper', 0.82);
-    triggerClass('bumper-impact', 700);
-  }
-
-  function triggerClass(className, duration) {
-    if (!machineEl) return;
-    machineEl.classList.remove(className);
-    void machineEl.offsetWidth;
-    machineEl.classList.add(className);
-    const key = className.startsWith('slot') ? 'slot' : 'bumper';
-    clearTimeout(state.timers[key]);
-    state.timers[key] = setTimeout(() => machineEl.classList.remove(className), duration);
-  }
-
-  function scoreBall(ball, slot) {
-    if (ball.dead) return;
-    ball.dead = true;
-    state.points += slotPoints(slot.value);
-    recordSlotHit(slot);
-    updateHud();
-  }
-
-  function spawnBall(x = state.level.spawn.x) {
-    playSfx('newball', 0.88);
-    state.balls.push({
-      id: state.nextBallId++,
-      x,
-      y: state.level.spawn.y,
-      vx: (Math.random() - 0.5) * 90,
-      vy: 0,
-      r: state.level.board.ballRadius,
-      angle: 0,
-      spin: (Math.random() - 0.5) * 6,
-      dead: false
-    });
-  }
-
-  function setSelectedCount(count) {
-    state.selectedCount = count;
-    updateHud();
-  }
-
-  function rollSelected() {
-    playSfx('button', 0.9);
-    const cost = currentCost();
-    if (state.points < cost) {
-      showToast('Puntos insuficientes');
-      return;
+    function resize(){
+      state.scale=playfield.clientWidth/LEVEL.board.width;
+      for(const obj of LEVEL.objects){
+        const el=state.objectEls.get(obj.id);
+        if(!el)continue;
+        if(obj.type==='peg'||obj.type==='bumper') setBox(el,obj.x,obj.y,obj.r*2,obj.r*2,0);
+        else if(obj.type==='wall'&&obj.id!=='piso') setBox(el,obj.x,obj.y,Math.min(obj.w,obj.h),Math.max(obj.w,obj.h),0);
+        else setBox(el,obj.x,obj.y,obj.w,obj.h,obj.angle||0);
+      }
+      for(const [id,el] of state.ballEls){const b=state.balls.find(x=>x.id===id); if(b)setBallEl(el,b);}
     }
-    state.points -= cost;
-    updateHud();
-    const count = state.selectedCount;
-    for (let i = 0; i < count; i += 1) {
-      setTimeout(() => {
-        const spread = Math.min(20, 5 + count * 1.2);
-        spawnBall(state.level.spawn.x + (Math.random() - 0.5) * spread);
-      }, i * 90);
-    }
-  }
+    function tick(t=performance.now()){const prev=state.lastFrameAt||t,elapsed=clamp(t-prev,0,80); state.lastFrameAt=t; state.acc+=elapsed*CONFIG.timeScale; let steps=0; while(state.acc>=CONFIG.physicsStep&&steps<CONFIG.maxSteps){state.balls.forEach(b=>stepBall(b,CONFIG.physicsStep/1000)); state.acc-=CONFIG.physicsStep; steps++;} if(steps===CONFIG.maxSteps)state.acc=0; state.balls=state.balls.filter(b=>{if(b.dead){const el=state.ballEls.get(b.id); if(el)el.remove(); state.ballEls.delete(b.id); return false;} return true;}); state.balls.forEach(b=>{b.angle+=b.spin/60; const el=state.ballEls.get(b.id); if(el)setBallEl(el,b);}); state.rewards=state.rewards.filter(r=>{r.age+=elapsed; const p=r.age/850; if(p>=1){r.el.remove();return false;} r.el.style.opacity=String(1-p); r.el.style.transform='translate3d('+((r.x*state.scale))+'px,'+((r.y*state.scale-p*88))+'px,0) translate(-50%,-50%)'; return true;}); state.raf=requestAnimationFrame(tick);}
 
-  function slotRewardTheme(value) {
-    const text = String(value);
-    if (text.startsWith('10')) return { label: '+10', core: '196,112,58', edge: '255,196,128', text: '#d47b3f', shadow: 'rgba(95,45,18,0.38)' };
-    if (text.startsWith('20')) return { label: '+20', core: '210,219,226', edge: '255,255,255', text: '#dce7ef', shadow: 'rgba(64,84,96,0.36)' };
-    return { label: '+50', core: '245,190,72', edge: '255,239,166', text: '#ffd166', shadow: 'rgba(105,69,10,0.4)' };
-  }
-
-  function slotHitProgress(obj) {
-    const hitAt = state.slotHits.get(obj.id);
-    if (hitAt == null) return null;
-    const age = (now() - hitAt) / 900;
-    if (age >= 1) { state.slotHits.delete(obj.id); return null; }
-    return { age, pulse: 1 - age };
-  }
-
-  function drawSlot(obj) {
-    const hit = slotHitProgress(obj);
-    const age = hit?.age ?? 0;
-    const pulse = hit?.pulse ?? 0;
-    const jitter = pulse ? Math.sin(age * Math.PI * 18) * 2.4 * pulse : 0;
-    const lift = pulse ? -Math.sin(age * Math.PI) * 3 * pulse : 0;
-    const img = imageForObject(obj);
-    drawImageCentered(ctx, img, obj.x + jitter, obj.y + lift, obj.w * (1 + 0.03 * pulse), obj.h * (1 + 0.04 * pulse), obj.angle || 0);
-  }
-
-  function drawBumper(obj) {
-    const hitAt = state.bumperHits.get(obj.id);
-    const age = hitAt ? (now() - hitAt) / 350 : Infinity;
-    const pulse = age < 1 ? (age < 0.1 ? age / 0.1 : Math.pow(1 - (age - 0.1) / 0.9, 3)) : 0;
-    if (hitAt && age >= 1) state.bumperHits.delete(obj.id);
-    const scale = 1 + 0.34 * pulse;
-    drawImageCentered(ctx, state.sprites.bumper, obj.x, obj.y, obj.r * 2 * scale, obj.r * 2 * scale);
-  }
-
-  function drawSlotRewardText(obj) {
-    const hit = slotHitProgress(obj);
-    if (!hit) return;
-    const { age } = hit;
-    const theme = slotRewardTheme(obj.value);
-    const alpha = Math.max(0, 1 - age);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = '900 30px Gotham, Montserrat, Avenir Next, ui-sans-serif, system-ui, sans-serif';
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = theme.shadow;
-    ctx.fillStyle = theme.text;
-    ctx.strokeText(theme.label, obj.x, obj.y - 30 - age * 94);
-    ctx.fillText(theme.label, obj.x, obj.y - 30 - age * 94);
-    ctx.restore();
-  }
-
-  function makeStaticLayer() {
-    const { width, height, cornerRadius } = state.level.board;
-    const layer = document.createElement('canvas');
-    layer.width = width;
-    layer.height = height;
-    const c = layer.getContext('2d');
-    c.imageSmoothingEnabled = true;
-    c.imageSmoothingQuality = isTouchDevice ? 'medium' : 'high';
-    drawRoundRect(c, 0, 0, width, height, cornerRadius || 0);
-    c.clip();
-    c.drawImage(state.images.board, 0, 0, width, height);
-    state.objectGroups.walls.forEach((obj) => {
-      const img = imageForObject(obj);
-      if (obj.id === 'piso') drawImageCentered(c, img, obj.x, obj.y, obj.w, obj.h, obj.angle || 0);
-      else drawImageCentered(c, img, obj.x, obj.y, Math.min(obj.w, obj.h), Math.max(obj.w, obj.h), 0);
-    });
-    state.objectGroups.pegs.forEach((obj) => drawImageCentered(c, state.sprites.peg, obj.x, obj.y, obj.r * 2, obj.r * 2));
-    state.staticLayer = layer;
-  }
-
-  function resizeCanvasIfNeeded() {
-    const { width, height } = state.level.board;
-    const scale = canvas.clientWidth / width;
-    const nextWidth = Math.max(1, Math.round(width * scale * renderDpr));
-    const nextHeight = Math.max(1, Math.round(height * scale * renderDpr));
-    if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
-      canvas.width = nextWidth;
-      canvas.height = nextHeight;
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = isTouchDevice ? 'medium' : 'high';
-    }
-    state.renderScale = scale;
-    return scale;
-  }
-
-  function draw() {
-    const { width, height, cornerRadius } = state.level.board;
-    const scale = resizeCanvasIfNeeded();
-    ctx.setTransform(scale * renderDpr, 0, 0, scale * renderDpr, 0, 0);
-    ctx.clearRect(0, 0, width, height);
-    ctx.save();
-    drawRoundRect(ctx, 0, 0, width, height, cornerRadius || 0);
-    ctx.clip();
-    ctx.drawImage(state.staticLayer, 0, 0, width, height);
-    state.objectGroups.slots.forEach(drawSlot);
-    state.objectGroups.bumpers.forEach(drawBumper);
-    state.balls.forEach((ball) => {
-      ball.angle += ball.spin * (1 / 60);
-      drawImageCentered(ctx, state.sprites.ball, ball.x, ball.y, ball.r * 2, ball.r * 2, ball.angle * 180 / Math.PI);
-    });
-    state.objectGroups.slots.forEach(drawSlotRewardText);
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-    ctx.lineWidth = 2;
-    drawRoundRect(ctx, 1, 1, width - 2, height - 2, Math.max(0, (cornerRadius || 0) - 1));
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function updatePhysics(dt) {
-    state.balls.forEach((ball) => stepBall(ball, dt));
-    state.balls = state.balls.filter((ball) => !ball.dead);
-  }
-
-  function tick(timestamp = performance.now()) {
-    const previous = state.lastFrameAt || timestamp;
-    const elapsed = clamp(timestamp - previous, 0, 80);
-    state.lastFrameAt = timestamp;
-    state.accumulator += elapsed * CONFIG.timeScale;
-    let steps = 0;
-    while (state.accumulator >= CONFIG.physicsStep && steps < CONFIG.maxSteps) {
-      updatePhysics(CONFIG.physicsStep / 1000);
-      state.accumulator -= CONFIG.physicsStep;
-      steps += 1;
-    }
-    if (steps === CONFIG.maxSteps) state.accumulator = 0;
-    draw();
-    state.raf = requestAnimationFrame(tick);
-  }
-
-  function reset() {
-    cancelAnimationFrame(state.raf);
-    state.balls = [];
-    state.nextBallId = 1;
-    state.bumperHits = new Map();
-    state.slotHits = new Map();
-    state.lastFrameAt = null;
-    state.accumulator = 0;
-    updateHud();
-    tick();
-  }
-
-  async function init() {
-    makeFallbackSfx();
-    const loadedImages = await Promise.all(Object.entries(assetPaths).map(async ([key, src]) => [key, await loadImage(src)]));
-    state.images = Object.fromEntries(loadedImages);
-    prepareGroups();
-    makeSprites();
-    buildCollisionWorld();
-    makeStaticLayer();
-    reset();
-  }
-
-  rollButton.addEventListener('click', rollSelected);
-  document.querySelectorAll('.multiplier').forEach((button) => {
-    button.addEventListener('click', () => {
-      playSfx('button', 0.78);
-      setSelectedCount(Number(button.dataset.count));
-    });
-  });
-
-  init().catch((error) => {
-    console.error(error);
-    showToast(error.message || 'No se pudo cargar');
-  });
-})();
-
-</script>
+    function init(){makeSfx(); state.scale=playfield.clientWidth/LEVEL.board.width; buildWorld(); buildDom(); updateHud(); tick();}
+    rollButton.addEventListener('click',roll);
+    document.querySelectorAll('.multiplier').forEach(btn=>btn.addEventListener('click',()=>{playSfx('button',0.78);state.selectedCount=Number(btn.dataset.count);updateHud();}));
+    window.addEventListener('resize',resize);
+    init();
+  </script>
 </body>
 </html>
