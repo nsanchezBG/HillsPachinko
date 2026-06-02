@@ -110,6 +110,13 @@
       box-shadow: inset 0 0 0 1px rgba(34,64,92,0.24), 0 1px 0 rgba(255,255,255,0.96), 0 10px 20px rgba(5,30,66,0.18);
       touch-action: manipulation;
     }
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      transform: translateZ(0);
+    }
 
     .entity {
       position: absolute;
@@ -205,7 +212,7 @@
   <main class="machine">
     <section class="board-frame" aria-label="Pachinko">
       <div class="board-logo-plaque" aria-hidden="true"><img src="Assets/logohills.png" alt="" /></div>
-      <div class="board-blue-shell"><div class="board-inner-frame"><div id="playfield"></div></div></div>
+      <div class="board-blue-shell"><div class="board-inner-frame"><div id="playfield"><canvas id="gameCanvas" width="720" height="960"></canvas></div></div></div>
     </section>
     <section class="hud" aria-label="Estado del juego">
       <div class="score-card" aria-live="polite"><div><span class="score-label"><img class="paw-icon paw-blue" src="Assets/huella.png" alt="" />PUNTOS<img class="paw-icon paw-blue" src="Assets/huella.png" alt="" /></span><strong id="points">150</strong></div></div>
@@ -219,16 +226,17 @@
   <script>
     const LEVEL = {"version":1,"name":"nivel-base","units":"px","board":{"width":720,"height":960,"gravity":1.6,"ballRadius":10,"cornerRadius":60,"borderRestitution":3,"borderFriction":0.04},"spawn":{"x":360,"y":20},"objects":[{"id":"slot10i","type":"slot","x":64,"y":880,"w":128,"h":57,"angle":0,"value":"10i"},{"id":"peg-30393","type":"peg","x":252,"y":198,"r":7,"restitution":4},{"id":"peg-31096","type":"peg","x":468,"y":198,"r":7,"restitution":4},{"id":"peg-33525","type":"peg","x":522,"y":252,"r":7,"restitution":4},{"id":"peg-34128","type":"peg","x":198,"y":252,"r":7,"restitution":4},{"id":"peg-34924","type":"peg","x":260,"y":320,"r":7,"restitution":4},{"id":"peg-35997","type":"peg","x":480,"y":320,"r":7,"restitution":4},{"id":"peg-36984","type":"peg","x":234,"y":144,"r":7,"restitution":4},{"id":"peg-38461","type":"peg","x":162,"y":144,"r":7,"restitution":4},{"id":"peg-39887","type":"peg","x":90,"y":144,"r":7,"restitution":4},{"id":"peg-41708","type":"peg","x":486,"y":144,"r":7,"restitution":4},{"id":"peg-42969","type":"peg","x":558,"y":144,"r":7,"restitution":4},{"id":"peg-43388","type":"peg","x":630,"y":144,"r":7,"restitution":4},{"id":"peg-79625","type":"peg","x":180,"y":360,"r":7,"restitution":4},{"id":"peg-82686","type":"peg","x":540,"y":360,"r":7,"restitution":4},{"id":"peg-84268","type":"peg","x":594,"y":306,"r":7,"restitution":4},{"id":"peg-85421","type":"peg","x":126,"y":306,"r":7,"restitution":4},{"id":"peg-15286","type":"peg","x":360,"y":300,"r":7,"restitution":4},{"id":"peg-17195","type":"peg","x":300,"y":380,"r":7,"restitution":4},{"id":"peg-21747","type":"peg","x":420,"y":380,"r":7,"restitution":4},{"id":"peg-23116","type":"peg","x":480,"y":420,"r":7,"restitution":4},{"id":"peg-24287","type":"peg","x":240,"y":420,"r":7,"restitution":4},{"id":"peg-87419","type":"peg","x":520,"y":480,"r":7,"restitution":4},{"id":"peg-90300","type":"peg","x":640,"y":500,"r":7,"restitution":4},{"id":"peg-91085","type":"peg","x":600,"y":600,"r":7,"restitution":4},{"id":"peg-92886","type":"peg","x":80,"y":500,"r":7,"restitution":4},{"id":"peg-95998","type":"peg","x":200,"y":480,"r":7,"restitution":4},{"id":"peg-98911","type":"peg","x":120,"y":600,"r":7,"restitution":4},{"id":"peg-14334","type":"peg","x":360,"y":440,"r":7,"restitution":4},{"id":"bumper-29231","type":"bumper","x":240,"y":420,"r":30,"restitution":16},{"id":"bumper-52950","type":"bumper","x":480,"y":420,"r":30,"restitution":16},{"id":"peg-30660","type":"peg","x":160,"y":540,"r":7,"restitution":4},{"id":"peg-34424","type":"peg","x":560,"y":540,"r":7,"restitution":4},{"id":"peg-92712","type":"peg","x":640,"y":660,"r":7,"restitution":4},{"id":"peg-96889","type":"peg","x":80,"y":660,"r":7,"restitution":4},{"id":"peg-141508","type":"peg","x":320,"y":500,"r":7,"restitution":4},{"id":"peg-142877","type":"peg","x":400,"y":500,"r":7,"restitution":4},{"id":"peg-148215","type":"peg","x":240,"y":620,"r":7,"restitution":4},{"id":"peg-149656","type":"peg","x":480,"y":620,"r":7,"restitution":4},{"id":"peg-165149","type":"peg","x":280,"y":560,"r":7,"restitution":4},{"id":"peg-168299","type":"peg","x":440,"y":560,"r":7,"restitution":4},{"id":"bumper-178902","type":"bumper","x":360,"y":600,"r":30,"restitution":16},{"id":"bumper-186573","type":"bumper","x":434,"y":700,"r":30,"restitution":16},{"id":"bumper-188734","type":"bumper","x":286,"y":700,"r":30,"restitution":16},{"id":"bumper-191111","type":"bumper","x":80,"y":240,"r":30,"restitution":16},{"id":"bumper-192851","type":"bumper","x":640,"y":240,"r":30,"restitution":16},{"id":"bumper-195729","type":"bumper","x":360,"y":200,"r":30,"restitution":16},{"id":"slot20i","type":"slot","x":212,"y":880,"w":128,"h":57,"angle":0,"value":"20i"},{"id":"slot50","type":"slot","x":360,"y":880,"w":128,"h":57,"angle":0,"value":"50"},{"id":"separador","type":"wall","x":582,"y":850,"w":20,"h":120,"angle":180,"restitution":5},{"id":"slot20d","type":"slot","x":508,"y":880,"w":128,"h":57,"angle":0,"value":"20d"},{"id":"slot10d","type":"slot","x":656,"y":880,"w":128,"h":57,"angle":0,"value":"10d"},{"id":"piso","type":"wall","x":360,"y":934,"w":720,"h":51,"angle":0,"restitution":0.42},{"id":"separador1","type":"wall","x":434,"y":850,"w":20,"h":120,"angle":180,"restitution":5},{"id":"separador2","type":"wall","x":286,"y":850,"w":20,"h":120,"angle":180,"restitution":5},{"id":"separador3","type":"wall","x":138,"y":850,"w":20,"h":120,"angle":180,"restitution":5}]};
     const CONFIG = { ballCost: 15, startingPoints: 150, physicsStep: 1000 / 60, timeScale: 1, maxSteps: 3, gravityScale: 1400, gridSize: 96, maxBallSpeed: 1800 };
-    const ASSETS = { ball:'Assets/ball.png', peg:'Assets/pin.png', bumper:'Assets/bumper.png', divider:'Assets/slot-divider.png', floor:'Assets/piso.png', slot10:'Assets/slot-10.png', slot20:'Assets/slot-20.png', slot50:'Assets/slot-50.png' };
+    const ASSETS = { bg:'Assets/board-bg.png', ball:'Assets/ball.png', peg:'Assets/pin.png', bumper:'Assets/bumper.png', divider:'Assets/slot-divider.png', floor:'Assets/piso.png', slot10:'Assets/slot-10.png', slot20:'Assets/slot-20.png', slot50:'Assets/slot-50.png' };
     const SFX = { bumper:'Assets/bumper.mp3', button:'Assets/button.mp3', newball:'Assets/newball.mp3', slot:'Assets/slot.mp3' };
-    const playfield = document.getElementById('playfield');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
     const pointsEl = document.getElementById('points');
     const rollButton = document.getElementById('roll');
     const rollCostEl = document.getElementById('rollCost');
     const toastEl = document.getElementById('toast');
     const machineEl = document.querySelector('.machine');
-    const isTouch = window.matchMedia?.('(pointer: coarse)')?.matches || navigator.maxTouchPoints > 0;
-    const state = { level: LEVEL, points: CONFIG.startingPoints, selectedCount: 1, scale: 1, balls: [], nextBallId: 1, colliders: [], slots: [], grid: new Map(), objectEls: new Map(), ballEls: new Map(), rewards: [], lastFrameAt: null, acc: 0, raf: null, sfx: {}, timers: {} };
+    const W = LEVEL.board.width, H = LEVEL.board.height;
+    const state = { points: CONFIG.startingPoints, selectedCount: 1, balls: [], nextBallId: 1, colliders: [], slots: [], grid: new Map(), rewards: [], slotFx: [], bumperHits: new Map(), lastFrameAt: null, acc: 0, raf: null, sfx: {}, timers: {}, images: {}, boardLayer: null, slotLayer: null };
 
     function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
     function len(x,y){return Math.hypot(x,y)||1;}
@@ -237,39 +245,55 @@
     function slotPoints(v){const m=String(v).match(/\d+/);return m?Number(m[0]):0;}
     function fmt(v){return Math.max(0,Math.floor(v)).toLocaleString('es-CO');}
     function cost(){return state.selectedCount*CONFIG.ballCost;}
+    function slotAsset(obj){return String(obj.value).startsWith('10')?state.images.slot10:String(obj.value).startsWith('20')?state.images.slot20:state.images.slot50;}
 
-    function makeSfx(){ state.sfx = Object.fromEntries(Object.entries(SFX).map(([name,src]) => [name,{i:0,pool:Array.from({length:name==='bumper'?6:3},()=>{const a=new Audio(src);a.preload='auto';a.volume=name==='button'?0.42:name==='bumper'?0.58:0.7;return a;})}])); }
+    function loadImages(){
+      return Promise.all(Object.entries(ASSETS).map(([name,src]) => new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve([name,img]);
+        img.onerror = () => resolve([name,img]);
+        img.decoding = 'async';
+        img.src = src;
+      }))).then(entries => { state.images = Object.fromEntries(entries); });
+    }
+    function makeSfx(){ state.sfx = Object.fromEntries(Object.entries(SFX).map(([name,src]) => [name,{i:0,pool:Array.from({length:name==='bumper'?5:3},()=>{const a=new Audio(src);a.preload='auto';a.volume=name==='button'?0.42:name==='bumper'?0.58:0.7;return a;})}])); }
     function playSfx(name, volume=1){const s=state.sfx[name]; if(!s)return; const a=s.pool[s.i]; s.i=(s.i+1)%s.pool.length; try{a.pause();a.currentTime=0;a.volume=clamp(volume*(name==='button'?0.42:name==='bumper'?0.58:0.7),0,1);a.play().catch(()=>{});}catch(_){}}
 
-    function objImg(obj){ if(obj.type==='peg')return ASSETS.peg; if(obj.type==='bumper')return ASSETS.bumper; if(obj.id==='piso')return ASSETS.floor; if(obj.type==='wall')return ASSETS.divider; if(obj.type==='slot')return String(obj.value).startsWith('10')?ASSETS.slot10:String(obj.value).startsWith('20')?ASSETS.slot20:ASSETS.slot50; return ''; }
-    function setBox(el,x,y,w,h,angle=0){
-      const s=state.scale;
-      el.style.width=(w*s)+'px';
-      el.style.height=(h*s)+'px';
-      el.style.transform='translate3d('+((x-w/2)*s)+'px,'+((y-h/2)*s)+'px,0) rotate('+angle+'deg)';
+    function drawImageBox(c,img,x,y,w,h,angle=0,scale=1){
+      if(!img)return;
+      c.save();
+      c.translate(x,y);
+      c.rotate(degToRad(angle));
+      c.scale(scale,scale);
+      c.drawImage(img,-w/2,-h/2,w,h);
+      c.restore();
     }
-    function setBallEl(el,b){
-      const s=state.scale;
-      const d=b.r*2;
-      el.style.width=(d*s)+'px';
-      el.style.height=(d*s)+'px';
-      el.style.transform='translate3d('+((b.x-b.r)*s)+'px,'+((b.y-b.r)*s)+'px,0) rotate('+b.angle+'rad)';
+    function drawObj(c,obj,scale=1){
+      if(obj.type==='peg') drawImageBox(c,state.images.peg,obj.x,obj.y,obj.r*2,obj.r*2,0,scale);
+      else if(obj.type==='bumper') drawImageBox(c,state.images.bumper,obj.x,obj.y,obj.r*2,obj.r*2,0,scale);
+      else if(obj.type==='slot') drawImageBox(c,slotAsset(obj),obj.x,obj.y,obj.w,obj.h,obj.angle||0,scale);
+      else if(obj.id==='piso') drawImageBox(c,state.images.floor,obj.x,obj.y,obj.w,obj.h,obj.angle||0,scale);
+      else if(obj.type==='wall') drawImageBox(c,state.images.divider,obj.x,obj.y,Math.min(obj.w,obj.h),Math.max(obj.w,obj.h),0,scale);
     }
-
-    function buildDom(){
-      playfield.innerHTML=''; state.objectEls.clear();
-      LEVEL.objects.forEach(obj=>{
-        const img=objImg(obj); if(!img)return;
-        const el=document.createElement('img'); el.src=img; el.className='entity static '+obj.type+(obj.id==='piso'?' piso':''); el.decoding='async';
-        if(obj.type==='peg'||obj.type==='bumper') setBox(el,obj.x,obj.y,obj.r*2,obj.r*2,0);
-        else if(obj.type==='wall'&&obj.id!=='piso') setBox(el,obj.x,obj.y,Math.min(obj.w,obj.h),Math.max(obj.w,obj.h),0);
-        else setBox(el,obj.x,obj.y,obj.w,obj.h,obj.angle||0);
-        if(obj.type==='slot') el.classList.add('slot');
-        if(obj.type==='peg') el.classList.add('peg');
-        if(obj.type==='bumper') el.classList.add('bumper');
-        if(obj.type==='wall') el.classList.add('wall');
-        playfield.appendChild(el); state.objectEls.set(obj.id,el);
+    function makeLayer(){
+      const layer = document.createElement('canvas');
+      layer.width = W; layer.height = H;
+      const c = layer.getContext('2d', { alpha: true });
+      c.imageSmoothingEnabled = true;
+      c.imageSmoothingQuality = 'high';
+      return [layer,c];
+    }
+    function buildLayers(){
+      const [board,bc] = makeLayer();
+      const [slots,sc] = makeLayer();
+      bc.drawImage(state.images.bg,0,0,W,H);
+      LEVEL.objects.forEach(obj => {
+        if(obj.type==='peg' || obj.id==='piso') drawObj(bc,obj);
       });
+      LEVEL.objects.filter(o => o.type==='slot').forEach(obj => drawObj(sc,obj));
+      LEVEL.objects.filter(o => o.type==='wall' && o.id!=='piso').forEach(obj => drawObj(sc,obj));
+      state.boardLayer = board;
+      state.slotLayer = slots;
     }
 
     function colliderRadius(c){return c.kind==='circle'?c.r:Math.hypot(c.w,c.h)/2;}
@@ -281,39 +305,97 @@
     function hitCircle(b,c){const dx=b.x-c.x,dy=b.y-c.y,d=len(dx,dy),m=b.r+c.r; if(d>=m)return; const nx=dx/d,ny=dy/d; b.x+=nx*(m-d); b.y+=ny*(m-d); reflect(b,nx,ny,c.restitution); if(c.obj.type==='bumper'){b.vx+=nx*260;b.vy+=ny*260;recordBumper(c.obj);}}
     function hitBox(b,c){const co=Math.cos(-c.angle),si=Math.sin(-c.angle),dx=b.x-c.x,dy=b.y-c.y,lx=dx*co-dy*si,ly=dx*si+dy*co,hw=c.w/2,hh=c.h/2,cx=clamp(lx,-hw,hw),cy=clamp(ly,-hh,hh); let nxL=lx-cx,nyL=ly-cy,ds=nxL*nxL+nyL*nyL; if(ds>b.r*b.r)return; if(ds<0.0001){const ex=hw-Math.abs(lx),ey=hh-Math.abs(ly); if(ex<ey){nxL=Math.sign(lx)||1;nyL=0;}else{nxL=0;nyL=Math.sign(ly)||-1;}ds=1;} const d=Math.sqrt(ds),lnx=nxL/d,lny=nyL/d,cos=Math.cos(c.angle),sin=Math.sin(c.angle),nx=lnx*cos-lny*sin,ny=lnx*sin+lny*cos; b.x+=nx*(b.r-d); b.y+=ny*(b.r-d); reflect(b,nx,ny,c.restitution);}
     function inSlot(b,sens){const co=Math.cos(-sens.angle),si=Math.sin(-sens.angle),dx=b.x-sens.x,dy=b.y-sens.y,lx=dx*co-dy*si,ly=dx*si+dy*co; return Math.abs(lx)<=sens.w/2&&Math.abs(ly)<=sens.h/2;}
-    function stepBall(b,dt){b.vy+=LEVEL.board.gravity*CONFIG.gravityScale*dt; b.vx*=0.999; b.vy*=0.999; const sp=Math.hypot(b.vx,b.vy); if(sp>CONFIG.maxBallSpeed){const sc=CONFIG.maxBallSpeed/sp;b.vx*=sc;b.vy*=sc;} b.x+=b.vx*dt; b.y+=b.vy*dt; const near=query(b); for(let p=0;p<2;p++)near.forEach(c=>c.kind==='circle'?hitCircle(b,c):hitBox(b,c)); if(b.x<b.r){b.x=b.r;b.vx=Math.abs(b.vx)*0.72;} if(b.x>LEVEL.board.width-b.r){b.x=LEVEL.board.width-b.r;b.vx=-Math.abs(b.vx)*0.72;} if(b.y< b.r){b.y=b.r;b.vy=Math.abs(b.vy)*0.72;} if(b.y>LEVEL.board.height+b.r*2)b.dead=true; for(const s of state.slots){if(inSlot(b,s)){score(b,s.obj);break;}}}
+    function stepBall(b,dt){b.vy+=LEVEL.board.gravity*CONFIG.gravityScale*dt; b.vx*=0.999; b.vy*=0.999; const sp=Math.hypot(b.vx,b.vy); if(sp>CONFIG.maxBallSpeed){const sc=CONFIG.maxBallSpeed/sp;b.vx*=sc;b.vy*=sc;} b.x+=b.vx*dt; b.y+=b.vy*dt; const near=query(b); for(let p=0;p<2;p++)near.forEach(c=>c.kind==='circle'?hitCircle(b,c):hitBox(b,c)); if(b.x<b.r){b.x=b.r;b.vx=Math.abs(b.vx)*0.72;} if(b.x>W-b.r){b.x=W-b.r;b.vx=-Math.abs(b.vx)*0.72;} if(b.y<b.r){b.y=b.r;b.vy=Math.abs(b.vy)*0.72;} if(b.y>H+b.r*2)b.dead=true; for(const s of state.slots){if(inSlot(b,s)){score(b,s.obj);break;}}}
 
     function updateHud(){pointsEl.textContent=fmt(state.points); rollCostEl.textContent=cost()+' pts'; rollButton.disabled=state.points<cost(); document.querySelectorAll('.multiplier').forEach(btn=>btn.classList.toggle('active',Number(btn.dataset.count)===state.selectedCount));}
     let toastTimer=null; function showToast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),1400);}
     function trigger(cls,dur){machineEl.classList.remove(cls); void machineEl.offsetWidth; machineEl.classList.add(cls); clearTimeout(state.timers[cls]); state.timers[cls]=setTimeout(()=>machineEl.classList.remove(cls),dur);}
-    function recordBumper(obj){
-      const el=state.objectEls.get(obj.id);
-      if(el){
-        setBox(el,obj.x,obj.y,obj.r*2.34,obj.r*2.34,0);
-        clearTimeout(el._hitTimer);
-        el._hitTimer=setTimeout(()=>setBox(el,obj.x,obj.y,obj.r*2,obj.r*2,0),75);
-      }
-      playSfx('bumper',0.75);
-    }
-    function rewardText(slot){const el=document.createElement('div'); el.className='reward'; el.textContent='+'+slotPoints(slot.value); el.style.color=String(slot.value).startsWith('10')?'#d47b3f':String(slot.value).startsWith('20')?'#dce7ef':'#ffd166'; playfield.appendChild(el); state.rewards.push({el,x:slot.x,y:slot.y-30,age:0});}
-    function score(b,slot){if(b.dead)return; b.dead=true; state.points+=slotPoints(slot.value); playSfx('slot'); rewardText(slot); trigger('slot-impact',520); updateHud();}
-    function spawnBall(x=LEVEL.spawn.x){playSfx('newball',0.85); const b={id:state.nextBallId++,x,y:LEVEL.spawn.y,vx:(Math.random()-0.5)*90,vy:0,r:LEVEL.board.ballRadius,angle:0,spin:(Math.random()-0.5)*6,dead:false}; const el=document.createElement('img'); el.src=ASSETS.ball; el.className='entity ball'; el.decoding='async'; setBallEl(el,b); playfield.appendChild(el); state.ballEls.set(b.id,el); state.balls.push(b);}
+    function recordBumper(obj){ state.bumperHits.set(obj.id, performance.now()); playSfx('bumper',0.75); }
+    function rewardText(slot){ state.rewards.push({x:slot.x,y:slot.y-30,age:0,text:'+'+slotPoints(slot.value),color:String(slot.value).startsWith('10')?'#d47b3f':String(slot.value).startsWith('20')?'#dce7ef':'#ffd166'}); }
+    function score(b,slot){if(b.dead)return; b.dead=true; state.points+=slotPoints(slot.value); playSfx('slot'); rewardText(slot); state.slotFx.push({slot,age:0,color:String(slot.value).startsWith('10')?'rgba(212,123,63,':String(slot.value).startsWith('20')?'rgba(220,231,239,':'rgba(255,209,102,'}); trigger('slot-impact',520); updateHud();}
+    function spawnBall(x=LEVEL.spawn.x){playSfx('newball',0.85); state.balls.push({id:state.nextBallId++,x,y:LEVEL.spawn.y,vx:(Math.random()-0.5)*90,vy:0,r:LEVEL.board.ballRadius,angle:0,spin:(Math.random()-0.5)*6,dead:false});}
     function roll(){playSfx('button',0.9); const c=cost(); if(state.points<c){showToast('Puntos insuficientes');return;} state.points-=c; updateHud(); const n=state.selectedCount; for(let i=0;i<n;i++)setTimeout(()=>spawnBall(LEVEL.spawn.x+(Math.random()-0.5)*Math.min(20,5+n*1.2)),i*85);}
 
-    function resize(){
-      state.scale=playfield.clientWidth/LEVEL.board.width;
-      for(const obj of LEVEL.objects){
-        const el=state.objectEls.get(obj.id);
-        if(!el)continue;
-        if(obj.type==='peg'||obj.type==='bumper') setBox(el,obj.x,obj.y,obj.r*2,obj.r*2,0);
-        else if(obj.type==='wall'&&obj.id!=='piso') setBox(el,obj.x,obj.y,Math.min(obj.w,obj.h),Math.max(obj.w,obj.h),0);
-        else setBox(el,obj.x,obj.y,obj.w,obj.h,obj.angle||0);
-      }
-      for(const [id,el] of state.ballEls){const b=state.balls.find(x=>x.id===id); if(b)setBallEl(el,b);}
+    function drawSlotFx(elapsed){
+      state.slotFx=state.slotFx.filter(fx=>{
+        fx.age+=elapsed; const p=fx.age/780; if(p>=1)return false;
+        const alpha=(1-p)*0.34, h=155+60*p, y=fx.slot.y-fx.slot.h/2-h/2;
+        const grad=ctx.createLinearGradient(fx.slot.x,y,fx.slot.x,fx.slot.y);
+        grad.addColorStop(0, fx.color+'0)');
+        grad.addColorStop(0.35, fx.color+(alpha*0.55)+')');
+        grad.addColorStop(1, fx.color+alpha+')');
+        ctx.save();
+        ctx.globalCompositeOperation='screen';
+        ctx.fillStyle=grad;
+        ctx.beginPath();
+        ctx.ellipse(fx.slot.x,y+h*0.52,fx.slot.w*0.58, h*0.52,0,0,Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+        return true;
+      });
     }
-    function tick(t=performance.now()){const prev=state.lastFrameAt||t,elapsed=clamp(t-prev,0,80); state.lastFrameAt=t; state.acc+=elapsed*CONFIG.timeScale; let steps=0; while(state.acc>=CONFIG.physicsStep&&steps<CONFIG.maxSteps){state.balls.forEach(b=>stepBall(b,CONFIG.physicsStep/1000)); state.acc-=CONFIG.physicsStep; steps++;} if(steps===CONFIG.maxSteps)state.acc=0; state.balls=state.balls.filter(b=>{if(b.dead){const el=state.ballEls.get(b.id); if(el)el.remove(); state.ballEls.delete(b.id); return false;} return true;}); state.balls.forEach(b=>{b.angle+=b.spin/60; const el=state.ballEls.get(b.id); if(el)setBallEl(el,b);}); state.rewards=state.rewards.filter(r=>{r.age+=elapsed; const p=r.age/850; if(p>=1){r.el.remove();return false;} r.el.style.opacity=String(1-p); r.el.style.transform='translate3d('+((r.x*state.scale))+'px,'+((r.y*state.scale-p*88))+'px,0) translate(-50%,-50%)'; return true;}); state.raf=requestAnimationFrame(tick);}
+    function drawBumpers(now){
+      LEVEL.objects.filter(o=>o.type==='bumper').forEach(obj=>{
+        const hit=state.bumperHits.get(obj.id);
+        let scale=1;
+        if(hit){
+          const p=(now-hit)/95;
+          if(p<1) scale=1+0.34*(1-p);
+          else state.bumperHits.delete(obj.id);
+        }
+        drawObj(ctx,obj,scale);
+      });
+    }
+    function drawBalls(){
+      const img=state.images.ball;
+      state.balls.forEach(b=>{
+        ctx.save();
+        ctx.translate(b.x,b.y);
+        ctx.rotate(b.angle);
+        ctx.drawImage(img,-b.r,-b.r,b.r*2,b.r*2);
+        ctx.restore();
+      });
+    }
+    function drawRewards(elapsed){
+      ctx.save();
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.font='950 30px Gotham, Montserrat, Arial, sans-serif';
+      ctx.shadowColor='rgba(76,40,0,0.4)';
+      ctx.shadowBlur=0;
+      ctx.shadowOffsetY=2;
+      state.rewards=state.rewards.filter(r=>{
+        r.age+=elapsed; const p=r.age/850; if(p>=1)return false;
+        ctx.globalAlpha=1-p;
+        ctx.fillStyle=r.color;
+        ctx.fillText(r.text,r.x,r.y-p*88);
+        return true;
+      });
+      ctx.restore();
+      ctx.globalAlpha=1;
+    }
+    function render(elapsed,now){
+      ctx.clearRect(0,0,W,H);
+      ctx.drawImage(state.boardLayer,0,0);
+      drawBumpers(now);
+      drawSlotFx(elapsed);
+      ctx.drawImage(state.slotLayer,0,0);
+      drawBalls();
+      drawRewards(elapsed);
+    }
+    function tick(t=performance.now()){
+      const prev=state.lastFrameAt||t,elapsed=clamp(t-prev,0,80); state.lastFrameAt=t; state.acc+=elapsed*CONFIG.timeScale;
+      let steps=0;
+      while(state.acc>=CONFIG.physicsStep&&steps<CONFIG.maxSteps){state.balls.forEach(b=>stepBall(b,CONFIG.physicsStep/1000)); state.acc-=CONFIG.physicsStep; steps++;}
+      if(steps===CONFIG.maxSteps)state.acc=0;
+      state.balls=state.balls.filter(b=>!b.dead);
+      state.balls.forEach(b=>{b.angle+=b.spin/60;});
+      render(elapsed,t);
+      state.raf=requestAnimationFrame(tick);
+    }
 
-    function init(){makeSfx(); state.scale=playfield.clientWidth/LEVEL.board.width; buildWorld(); buildDom(); updateHud(); tick();}
+    function resize(){ if(state.boardLayer && state.slotLayer) render(0, performance.now()); }
+    async function init(){makeSfx(); buildWorld(); await loadImages(); canvas.width=W; canvas.height=H; ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high'; buildLayers(); updateHud(); render(0,performance.now()); tick();}
     rollButton.addEventListener('click',roll);
     document.querySelectorAll('.multiplier').forEach(btn=>btn.addEventListener('click',()=>{playSfx('button',0.78);state.selectedCount=Number(btn.dataset.count);updateHud();}));
     window.addEventListener('resize',resize);
