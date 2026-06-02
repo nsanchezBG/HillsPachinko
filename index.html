@@ -1368,7 +1368,17 @@
       bumperHits: new Map(),
       trails: new Map(),
       slotHits: new Map(),
+      objectGroups: {
+        slots: [],
+        walls: [],
+        pegs: [],
+        bumpers: []
+      },
+      renderWidth: 0,
+      renderHeight: 0,
+      renderScale: 1,
       raf: null,
+      lastFrameAt: null,
       debug: false,
       lastSpawnX: null
     };
@@ -1380,39 +1390,156 @@
     const rollCostEl = document.getElementById("rollCost");
     const toastEl = document.getElementById("toast");
     const machineEl = document.querySelector(".machine");
-    const dpr = window.devicePixelRatio || 1;
+    const isTouchDevice = window.matchMedia?.("(pointer: coarse)")?.matches || navigator.maxTouchPoints > 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, isTouchDevice ? 1.5 : 2);
+    const trailLimit = isTouchDevice ? 10 : 18;
     const SLOT_HIT_DURATION = 980;
     let slotImpactTimer = null;
     let bumperImpactTimer = null;
-    const sfx = Object.fromEntries(
-      Object.entries(sfxPaths).map(([name, src]) => [
-        name,
-        {
-          index: 0,
-          pool: Array.from({ length: name === "bumper" ? 5 : 3 }, () => {
-            const audio = new Audio(src);
-            audio.preload = "auto";
-            audio.volume = name === "button" ? 0.42 : name === "bumper" ? 0.62 : 0.72;
-            return audio;
-          })
-        }
-      ])
-    );
+    const sfx = {
+      context: null,
+      compressor: null,
+      buffers: {},
+      loading: null,
+      fallback: {},
+      ready: false,
+      failed: false,
+      targetRms: 0.16
+    };
 
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
     }
 
-    function playSfx(name, volume = 1) {
-      const sound = sfx[name];
+    function baseSfxVolume(name) {
+      return name === "button" ? 0.42 : name === "bumper" ? 0.62 : 0.72;
+    }
+
+    function makeFallbackSfx() {
+      sfx.fallback = Object.fromEntries(
+        Object.entries(sfxPaths).map(([name, src]) => [
+          name,
+          {
+            index: 0,
+            pool: Array.from({ length: name === "bumper" ? 5 : 3 }, () => {
+              const audio = new Audio(src);
+              audio.preload = "auto";
+              audio.volume = baseSfxVolume(name);
+              return audio;
+            })
+          }
+        ])
+      );
+    }
+
+    function playFallbackSfx(name, volume = 1) {
+      const sound = sfx.fallback[name];
       if (!sound) return;
       const audio = sound.pool[sound.index];
       sound.index = (sound.index + 1) % sound.pool.length;
       try {
         audio.pause();
         audio.currentTime = 0;
-        audio.volume = clamp(volume * (name === "button" ? 0.42 : name === "bumper" ? 0.62 : 0.72), 0, 1);
+        audio.volume = clamp(volume * baseSfxVolume(name), 0, 1);
         audio.play().catch(() => {});
+      } catch (_) {}
+    }
+
+    function makeAudioContext() {
+      if (sfx.context) return sfx.context;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+
+      const context = new AudioContextClass();
+      const compressor = context.createDynamicsCompressor();
+      compressor.threshold.value = -17;
+      compressor.knee.value = 18;
+      compressor.ratio.value = 4.5;
+      compressor.attack.value = 0.004;
+      compressor.release.value = 0.16;
+
+      const master = context.createGain();
+      master.gain.value = 0.82;
+      compressor.connect(master);
+      master.connect(context.destination);
+
+      sfx.context = context;
+      sfx.compressor = compressor;
+      return context;
+    }
+
+    function measureActiveRms(buffer) {
+      let sum = 0;
+      let count = 0;
+      let peak = 0;
+      const stride = Math.max(1, Math.floor(buffer.sampleRate / 12000));
+
+      for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+        const data = buffer.getChannelData(channel);
+        for (let i = 0; i < data.length; i += stride) {
+          const value = Math.abs(data[i]);
+          peak = Math.max(peak, value);
+          if (value > 0.012) {
+            sum += value * value;
+            count += 1;
+          }
+        }
+      }
+
+      return {
+        rms: count ? Math.sqrt(sum / count) : 0.08,
+        peak: peak || 0.08
+      };
+    }
+
+    function normalizedSfxGain(buffer) {
+      const { rms, peak } = measureActiveRms(buffer);
+      const rmsGain = sfx.targetRms / Math.max(rms, 0.001);
+      const peakSafeGain = 0.88 / Math.max(peak, 0.001);
+      return clamp(Math.min(rmsGain, peakSafeGain), 0.22, 2.4);
+    }
+
+    async function loadSfxBuffers() {
+      const context = makeAudioContext();
+      if (!context) {
+        sfx.failed = true;
+        return;
+      }
+
+      const decoded = await Promise.all(
+        Object.entries(sfxPaths).map(async ([name, src]) => {
+          const response = await fetch(src);
+          if (!response.ok) throw new Error(`No se pudo cargar ${src}`);
+          const buffer = await context.decodeAudioData(await response.arrayBuffer());
+          return [name, { buffer, gain: normalizedSfxGain(buffer) }];
+        })
+      );
+
+      sfx.buffers = Object.fromEntries(decoded);
+      sfx.ready = true;
+      sfx.failed = false;
+    }
+
+    function playSfx(name, volume = 1) {
+      if (sfx.failed) {
+        playFallbackSfx(name, volume);
+        return;
+      }
+
+      const context = makeAudioContext();
+      const sound = sfx.buffers[name];
+      if (!context || !sfx.compressor) return;
+      if (!sfx.ready || sfx.failed || !sound) return;
+
+      try {
+        if (context.state === "suspended") context.resume().catch(() => {});
+        const source = context.createBufferSource();
+        const gain = context.createGain();
+        source.buffer = sound.buffer;
+        gain.gain.value = clamp(volume * sound.gain, 0, 2.2);
+        source.connect(gain);
+        gain.connect(sfx.compressor);
+        source.start();
       } catch (_) {}
     }
 
@@ -1719,9 +1846,9 @@
       }, 720);
     }
 
-    function updateTrails() {
+    function updateTrails(bodies = Composite.allBodies(state.engine.world)) {
       const liveBallIds = new Set();
-      Composite.allBodies(state.engine.world)
+      bodies
         .filter((body) => body.label?.startsWith("ball:"))
         .forEach((body) => {
           liveBallIds.add(body.id);
@@ -1732,7 +1859,7 @@
             life: 1,
             speed: Math.hypot(body.velocity.x, body.velocity.y)
           });
-          while (trail.length > 26) trail.shift();
+          while (trail.length > trailLimit) trail.shift();
           state.trails.set(body.id, trail);
         });
 
@@ -1976,38 +2103,63 @@
       ctx.restore();
     }
 
-    function draw() {
-      const level = state.level;
-      const { width, height, cornerRadius } = level.board;
+    function prepareLevelRender(level) {
+      state.objectGroups = {
+        slots: level.objects.filter((obj) => obj.type === "slot"),
+        walls: level.objects.filter((obj) => obj.type === "wall"),
+        pegs: level.objects.filter((obj) => obj.type === "peg"),
+        bumpers: level.objects.filter((obj) => obj.type === "bumper")
+      };
+    }
+
+    function resizeCanvasIfNeeded(level) {
+      const { width, height } = level.board;
       const scale = canvas.clientWidth / width;
-      canvas.width = Math.round(width * scale * dpr);
-      canvas.height = Math.round(height * scale * dpr);
+      const nextWidth = Math.max(1, Math.round(width * scale * dpr));
+      const nextHeight = Math.max(1, Math.round(height * scale * dpr));
+
+      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+        canvas.width = nextWidth;
+        canvas.height = nextHeight;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = isTouchDevice ? "medium" : "high";
+      }
+
+      state.renderWidth = nextWidth;
+      state.renderHeight = nextHeight;
+      state.renderScale = scale;
+      return scale;
+    }
+
+    function draw(bodies = Composite.allBodies(state.engine.world)) {
+      const level = state.level;
+      const groups = state.objectGroups;
+      const { width, height, cornerRadius } = level.board;
+      const scale = resizeCanvasIfNeeded(level);
       ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
 
+      ctx.save();
       drawRoundRect(ctx, 0, 0, width, height, cornerRadius || 0);
       ctx.clip();
       ctx.drawImage(state.images.board, 0, 0, width, height);
 
-      level.objects.filter((obj) => obj.type === "slot").forEach(drawSlotRewardGlow);
-      level.objects.filter((obj) => obj.type === "slot").forEach(drawObject);
-      level.objects.filter((obj) => obj.type === "wall").forEach(drawObject);
-      level.objects.filter((obj) => obj.type === "peg").forEach(drawObject);
-      level.objects.filter((obj) => obj.type === "bumper").forEach(drawObject);
+      groups.slots.forEach(drawSlotRewardGlow);
+      groups.slots.forEach(drawObject);
+      groups.walls.forEach(drawObject);
+      groups.pegs.forEach(drawObject);
+      groups.bumpers.forEach(drawObject);
 
       drawBallTrails();
 
-      Composite.allBodies(state.engine.world)
+      bodies
         .filter((body) => body.label?.startsWith("ball:"))
         .forEach(drawBall);
 
-      level.objects.filter((obj) => obj.type === "slot").forEach(drawSlotRewardText);
+      groups.slots.forEach(drawSlotRewardText);
 
-      if (state.debug) Composite.allBodies(state.engine.world).forEach(drawDebugBody);
+      if (state.debug) bodies.forEach(drawDebugBody);
 
-      ctx.save();
       ctx.strokeStyle = "rgba(255,255,255,0.7)";
       ctx.lineWidth = 2;
       drawRoundRect(ctx, 1, 1, width - 2, height - 2, Math.max(0, (cornerRadius || 0) - 1));
@@ -2015,15 +2167,20 @@
       ctx.restore();
     }
 
-    function tick() {
-      Engine.update(state.engine, 1000 / 60);
-      updateTrails();
-      Composite.allBodies(state.engine.world).forEach((body) => {
+    function tick(timestamp = performance.now()) {
+      const previous = state.lastFrameAt || timestamp - 1000 / 60;
+      const delta = clamp(timestamp - previous, 1000 / 60, 1000 / 30);
+      state.lastFrameAt = timestamp;
+
+      Engine.update(state.engine, delta);
+      const bodies = Composite.allBodies(state.engine.world);
+      bodies.forEach((body) => {
         if (body.label?.startsWith("ball:") && body.position.y > state.level.board.height + 140) {
           World.remove(state.engine.world, body);
         }
       });
-      draw();
+      updateTrails(bodies);
+      draw(bodies);
       state.raf = requestAnimationFrame(tick);
     }
 
@@ -2052,6 +2209,7 @@
       state.bumperHits = new Map();
       state.trails = new Map();
       state.slotHits = new Map();
+      state.lastFrameAt = null;
       state.engine = makeEngine(state.level);
       updateHud();
       tick();
@@ -2110,7 +2268,7 @@
     }
 
     function makeSprites(images, level) {
-      const spriteScale = Math.min(4, Math.max(2, Math.ceil(window.devicePixelRatio || 1)));
+      const spriteScale = isTouchDevice ? 2 : Math.min(4, Math.max(2, Math.ceil(window.devicePixelRatio || 1)));
       const ball = { w: level.board.ballRadius * 2, h: level.board.ballRadius * 2 };
       const peg = maxObjectSize(level, (obj) => obj.type === "peg", { w: 14, h: 14 });
       const bumper = maxObjectSize(level, (obj) => obj.type === "bumper", { w: 60, h: 60 });
@@ -2144,6 +2302,16 @@
     }
 
     async function init() {
+      makeFallbackSfx();
+      if (isTouchDevice) {
+        sfx.failed = true;
+      } else {
+        sfx.loading = loadSfxBuffers().catch((error) => {
+          sfx.failed = true;
+          console.warn("SFX desactivados", error);
+        });
+      }
+
       const [level, loadedImages] = await Promise.all([
         loadLevel(),
         Promise.all(Object.entries(assetPaths).map(async ([key, src]) => [key, await loadImage(src)]))
@@ -2151,6 +2319,7 @@
       state.level = level;
       state.images = Object.fromEntries(loadedImages);
       state.sprites = makeSprites(state.images, level);
+      prepareLevelRender(level);
       reset();
     }
 
