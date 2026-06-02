@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Hill's Pachinko</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
   <style>
     :root {
       --brand-font: "Gotham", "Gotham SSm", "Gotham Rounded", "Montserrat", "Avenir Next", "Proxima Nova", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -838,35 +837,10 @@
   </main>
 
   <script>
-    const {
-      Body,
-      Bodies,
-      Composite,
-      Engine,
-      Events,
-      World
-    } = Matter;
+﻿(() => {
+  'use strict';
 
-    const assetPaths = {
-      board: "Assets/board-bg.png",
-      ball: "Assets/ball.png",
-      peg: "Assets/pin.png",
-      bumper: "Assets/bumper.png",
-      divider: "Assets/slot-divider.png",
-      floor: "Assets/piso.png",
-      slot10: "Assets/slot-10.png",
-      slot20: "Assets/slot-20.png",
-      slot50: "Assets/slot-50.png"
-    };
-
-    const sfxPaths = {
-      bumper: "Assets/bumper.mp3",
-      button: "Assets/button.mp3",
-      newball: "Assets/newball.mp3",
-      slot: "Assets/slot.mp3"
-    };
-
-    const embeddedLevel = JSON.parse(String.raw`{
+  const LEVEL = {
   "version": 1,
   "name": "nivel-base",
   "units": "px",
@@ -1353,1048 +1327,673 @@
       "restitution": 5
     }
   ]
-}`);
+};
 
-    const state = {
-      level: null,
-      engine: null,
-      images: {},
-      sprites: {},
-      points: 150,
-      selectedCount: 1,
-      ballCost: 15,
-      scores: {},
-      scored: new Set(),
-      bumperHits: new Map(),
-      trails: new Map(),
-      slotHits: new Map(),
-      objectGroups: {
-        slots: [],
-        walls: [],
-        pegs: [],
-        bumpers: []
-      },
-      renderWidth: 0,
-      renderHeight: 0,
-      renderScale: 1,
-      staticLayer: null,
-      raf: null,
-      lastFrameAt: null,
-      physicsAccumulator: 0,
-      debug: false,
-      lastSpawnX: null
+  const CONFIG = {
+    ballCost: 15,
+    startingPoints: 150,
+    physicsStep: 1000 / 60,
+    timeScale: 1.6,
+    maxSteps: 4,
+    gravityScale: 1400,
+    gridSize: 96,
+    maxBallSpeed: 1450,
+    mobileDpr: 1.35,
+    desktopDpr: 1.75,
+    trailLimit: 12
+  };
+
+  const assetPaths = {
+    board: 'Assets/board-bg.png',
+    ball: 'Assets/ball.png',
+    peg: 'Assets/pin.png',
+    bumper: 'Assets/bumper.png',
+    divider: 'Assets/slot-divider.png',
+    floor: 'Assets/piso.png',
+    slot10: 'Assets/slot-10.png',
+    slot20: 'Assets/slot-20.png',
+    slot50: 'Assets/slot-50.png'
+  };
+
+  const sfxPaths = {
+    bumper: 'Assets/bumper.mp3',
+    button: 'Assets/button.mp3',
+    newball: 'Assets/newball.mp3',
+    slot: 'Assets/slot.mp3'
+  };
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const pointsEl = document.getElementById('points');
+  const rollButton = document.getElementById('roll');
+  const rollCostEl = document.getElementById('rollCost');
+  const toastEl = document.getElementById('toast');
+  const machineEl = document.querySelector('.machine');
+  const isTouchDevice = window.matchMedia?.('(pointer: coarse)')?.matches || navigator.maxTouchPoints > 0;
+  const renderDpr = Math.min(window.devicePixelRatio || 1, isTouchDevice ? CONFIG.mobileDpr : CONFIG.desktopDpr);
+
+  const state = {
+    level: LEVEL,
+    images: {},
+    sprites: {},
+    points: CONFIG.startingPoints,
+    selectedCount: 1,
+    balls: [],
+    nextBallId: 1,
+    colliders: [],
+    slotSensors: [],
+    grid: new Map(),
+    objectGroups: { slots: [], walls: [], pegs: [], bumpers: [] },
+    bumperHits: new Map(),
+    slotHits: new Map(),
+    trails: new Map(),
+    raf: null,
+    lastFrameAt: null,
+    accumulator: 0,
+    renderScale: 1,
+    staticLayer: null,
+    sfx: {},
+    timers: { slot: null, bumper: null }
+  };
+
+  function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+  function degToRad(deg) { return (Number(deg) || 0) * Math.PI / 180; }
+  function length(x, y) { return Math.hypot(x, y) || 1; }
+  function now() { return performance.now(); }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  function makeFallbackSfx() {
+    state.sfx = Object.fromEntries(Object.entries(sfxPaths).map(([name, src]) => [name, {
+      index: 0,
+      pool: Array.from({ length: name === 'bumper' ? 6 : 3 }, () => {
+        const audio = new Audio(src);
+        audio.preload = 'auto';
+        audio.volume = name === 'button' ? 0.42 : name === 'bumper' ? 0.58 : 0.7;
+        return audio;
+      })
+    }]));
+  }
+
+  function playSfx(name, volume = 1) {
+    const sound = state.sfx[name];
+    if (!sound) return;
+    const audio = sound.pool[sound.index];
+    sound.index = (sound.index + 1) % sound.pool.length;
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = clamp(volume * (name === 'button' ? 0.42 : name === 'bumper' ? 0.58 : 0.7), 0, 1);
+      audio.play().catch(() => {});
+    } catch (_) {}
+  }
+
+  function drawRoundRect(context, x, y, w, h, r) {
+    const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+    context.beginPath();
+    context.moveTo(x + radius, y);
+    context.arcTo(x + w, y, x + w, y + h, radius);
+    context.arcTo(x + w, y + h, x, y + h, radius);
+    context.arcTo(x, y + h, x, y, radius);
+    context.arcTo(x, y, x + w, y, radius);
+    context.closePath();
+  }
+
+  function drawImageCentered(context, img, x, y, w, h, angle = 0) {
+    if (!img) return;
+    context.save();
+    context.translate(x, y);
+    context.rotate(degToRad(angle));
+    context.drawImage(img, -w / 2, -h / 2, w, h);
+    context.restore();
+  }
+
+  function imageForObject(obj) {
+    if (obj.type === 'peg') return state.sprites.peg;
+    if (obj.type === 'bumper') return state.sprites.bumper;
+    if (obj.id === 'piso') return state.sprites.floor;
+    if (obj.type === 'wall') return state.sprites.divider;
+    if (obj.type === 'slot') {
+      if (String(obj.value).startsWith('10')) return state.sprites.slot10;
+      if (String(obj.value).startsWith('20')) return state.sprites.slot20;
+      return state.sprites.slot50;
+    }
+    return null;
+  }
+
+  function resampleImage(img, width, height) {
+    const targetWidth = Math.max(1, Math.round(width));
+    const targetHeight = Math.max(1, Math.round(height));
+    const canvasEl = document.createElement('canvas');
+    canvasEl.width = targetWidth;
+    canvasEl.height = targetHeight;
+    const c = canvasEl.getContext('2d');
+    c.imageSmoothingEnabled = true;
+    c.imageSmoothingQuality = isTouchDevice ? 'medium' : 'high';
+    c.drawImage(img, 0, 0, targetWidth, targetHeight);
+    return canvasEl;
+  }
+
+  function maxObjectSize(predicate, fallback) {
+    const size = state.level.objects.reduce((acc, obj) => {
+      if (!predicate(obj)) return acc;
+      const w = obj.r ? obj.r * 2 : obj.w || 0;
+      const h = obj.r ? obj.r * 2 : obj.h || 0;
+      return { w: Math.max(acc.w, w), h: Math.max(acc.h, h) };
+    }, { w: 0, h: 0 });
+    return { w: size.w || fallback.w, h: size.h || fallback.h };
+  }
+
+  function makeSprites() {
+    const spriteScale = isTouchDevice ? 2 : 2.5;
+    const ball = { w: state.level.board.ballRadius * 2, h: state.level.board.ballRadius * 2 };
+    const peg = maxObjectSize((obj) => obj.type === 'peg', { w: 14, h: 14 });
+    const bumper = maxObjectSize((obj) => obj.type === 'bumper', { w: 60, h: 60 });
+    const divider = maxObjectSize((obj) => obj.type === 'wall' && obj.id !== 'piso', { w: 20, h: 120 });
+    const floor = maxObjectSize((obj) => obj.id === 'piso', { w: state.level.board.width, h: 51 });
+    const slot10 = maxObjectSize((obj) => obj.type === 'slot' && String(obj.value).startsWith('10'), { w: 128, h: 57 });
+    const slot20 = maxObjectSize((obj) => obj.type === 'slot' && String(obj.value).startsWith('20'), { w: 128, h: 57 });
+    const slot50 = maxObjectSize((obj) => obj.type === 'slot' && String(obj.value) === '50', { w: 128, h: 57 });
+    state.sprites = {
+      ball: resampleImage(state.images.ball, ball.w * spriteScale, ball.h * spriteScale),
+      peg: resampleImage(state.images.peg, peg.w * spriteScale, peg.h * spriteScale),
+      bumper: resampleImage(state.images.bumper, bumper.w * spriteScale, bumper.h * spriteScale),
+      divider: resampleImage(state.images.divider, divider.w * spriteScale, divider.h * spriteScale),
+      floor: resampleImage(state.images.floor, floor.w * spriteScale, floor.h * spriteScale),
+      slot10: resampleImage(state.images.slot10, slot10.w * spriteScale, slot10.h * spriteScale),
+      slot20: resampleImage(state.images.slot20, slot20.w * spriteScale, slot20.h * spriteScale),
+      slot50: resampleImage(state.images.slot50, slot50.w * spriteScale, slot50.h * spriteScale)
     };
+  }
 
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-    const pointsEl = document.getElementById("points");
-    const rollButton = document.getElementById("roll");
-    const rollCostEl = document.getElementById("rollCost");
-    const toastEl = document.getElementById("toast");
-    const machineEl = document.querySelector(".machine");
-    const isTouchDevice = window.matchMedia?.("(pointer: coarse)")?.matches || navigator.maxTouchPoints > 0;
-    const dpr = Math.min(window.devicePixelRatio || 1, isTouchDevice ? 1.5 : 2);
-    const trailLimit = isTouchDevice ? 10 : 18;
-    const FIXED_PHYSICS_STEP = 1000 / 60;
-    const PHYSICS_TIME_SCALE = 1.6;
-    const MAX_PHYSICS_STEPS = isTouchDevice ? 3 : 5;
-    const SLOT_HIT_DURATION = 980;
-    let slotImpactTimer = null;
-    let bumperImpactTimer = null;
-    const sfx = {
-      context: null,
-      compressor: null,
-      buffers: {},
-      loading: null,
-      fallback: {},
-      ready: false,
-      failed: false,
-      targetRms: 0.16
+  function prepareGroups() {
+    state.objectGroups = {
+      slots: state.level.objects.filter((obj) => obj.type === 'slot'),
+      walls: state.level.objects.filter((obj) => obj.type === 'wall'),
+      pegs: state.level.objects.filter((obj) => obj.type === 'peg'),
+      bumpers: state.level.objects.filter((obj) => obj.type === 'bumper')
     };
+  }
 
-    function clamp(value, min, max) {
-      return Math.max(min, Math.min(max, value));
-    }
+  function colliderRadius(collider) {
+    if (collider.kind === 'circle') return collider.r;
+    return Math.hypot(collider.w, collider.h) / 2;
+  }
 
-    function baseSfxVolume(name) {
-      return name === "button" ? 0.42 : name === "bumper" ? 0.62 : 0.72;
-    }
+  function gridKey(cx, cy) { return String(cx) + "," + String(cy); }
 
-    function makeFallbackSfx() {
-      sfx.fallback = Object.fromEntries(
-        Object.entries(sfxPaths).map(([name, src]) => [
-          name,
-          {
-            index: 0,
-            pool: Array.from({ length: name === "bumper" ? 5 : 3 }, () => {
-              const audio = new Audio(src);
-              audio.preload = "auto";
-              audio.volume = baseSfxVolume(name);
-              return audio;
-            })
-          }
-        ])
-      );
-    }
-
-    function playFallbackSfx(name, volume = 1) {
-      const sound = sfx.fallback[name];
-      if (!sound) return;
-      const audio = sound.pool[sound.index];
-      sound.index = (sound.index + 1) % sound.pool.length;
-      try {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.volume = clamp(volume * baseSfxVolume(name), 0, 1);
-        audio.play().catch(() => {});
-      } catch (_) {}
-    }
-
-    function makeAudioContext() {
-      if (sfx.context) return sfx.context;
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return null;
-
-      const context = new AudioContextClass();
-      const compressor = context.createDynamicsCompressor();
-      compressor.threshold.value = -17;
-      compressor.knee.value = 18;
-      compressor.ratio.value = 4.5;
-      compressor.attack.value = 0.004;
-      compressor.release.value = 0.16;
-
-      const master = context.createGain();
-      master.gain.value = 0.82;
-      compressor.connect(master);
-      master.connect(context.destination);
-
-      sfx.context = context;
-      sfx.compressor = compressor;
-      return context;
-    }
-
-    function measureActiveRms(buffer) {
-      let sum = 0;
-      let count = 0;
-      let peak = 0;
-      const stride = Math.max(1, Math.floor(buffer.sampleRate / 12000));
-
-      for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
-        const data = buffer.getChannelData(channel);
-        for (let i = 0; i < data.length; i += stride) {
-          const value = Math.abs(data[i]);
-          peak = Math.max(peak, value);
-          if (value > 0.012) {
-            sum += value * value;
-            count += 1;
-          }
-        }
+  function addToGrid(collider) {
+    const r = colliderRadius(collider) + state.level.board.ballRadius + 6;
+    const minX = Math.floor((collider.x - r) / CONFIG.gridSize);
+    const maxX = Math.floor((collider.x + r) / CONFIG.gridSize);
+    const minY = Math.floor((collider.y - r) / CONFIG.gridSize);
+    const maxY = Math.floor((collider.y + r) / CONFIG.gridSize);
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const key = gridKey(x, y);
+        if (!state.grid.has(key)) state.grid.set(key, []);
+        state.grid.get(key).push(collider);
       }
-
-      return {
-        rms: count ? Math.sqrt(sum / count) : 0.08,
-        peak: peak || 0.08
-      };
     }
+  }
 
-    function normalizedSfxGain(buffer) {
-      const { rms, peak } = measureActiveRms(buffer);
-      const rmsGain = sfx.targetRms / Math.max(rms, 0.001);
-      const peakSafeGain = 0.88 / Math.max(peak, 0.001);
-      return clamp(Math.min(rmsGain, peakSafeGain), 0.22, 2.4);
+  function makeCollider(obj) {
+    const restitution = obj.type === 'bumper'
+      ? 1.35
+      : obj.type === 'peg'
+        ? 0.72
+        : 0.64;
+    if (obj.type === 'peg' || obj.type === 'bumper') {
+      return { kind: 'circle', obj, x: obj.x, y: obj.y, r: obj.r, restitution };
     }
-
-    async function loadSfxBuffers() {
-      const context = makeAudioContext();
-      if (!context) {
-        sfx.failed = true;
-        return;
-      }
-
-      const decoded = await Promise.all(
-        Object.entries(sfxPaths).map(async ([name, src]) => {
-          const response = await fetch(src);
-          if (!response.ok) throw new Error(`No se pudo cargar ${src}`);
-          const buffer = await context.decodeAudioData(await response.arrayBuffer());
-          return [name, { buffer, gain: normalizedSfxGain(buffer) }];
-        })
-      );
-
-      sfx.buffers = Object.fromEntries(decoded);
-      sfx.ready = true;
-      sfx.failed = false;
+    if (obj.type === 'wall') {
+      return { kind: 'box', obj, x: obj.x, y: obj.y, w: obj.w, h: obj.h, angle: degToRad(obj.angle || 0), restitution: 0.62 };
     }
+    return null;
+  }
 
-    function playSfx(name, volume = 1) {
-      if (sfx.failed) {
-        playFallbackSfx(name, volume);
-        return;
-      }
+  function makeSlotSensor(obj) {
+    return { obj, x: obj.x, y: obj.y, w: obj.w, h: obj.h, angle: degToRad(obj.angle || 0) };
+  }
 
-      const context = makeAudioContext();
-      const sound = sfx.buffers[name];
-      if (!context || !sfx.compressor) return;
-      if (!sfx.ready || sfx.failed || !sound) return;
+  function buildCollisionWorld() {
+    state.colliders = [];
+    state.slotSensors = state.objectGroups.slots.map(makeSlotSensor);
+    state.grid = new Map();
+    [...state.objectGroups.pegs, ...state.objectGroups.bumpers, ...state.objectGroups.walls].forEach((obj) => {
+      const collider = makeCollider(obj);
+      if (!collider) return;
+      state.colliders.push(collider);
+      addToGrid(collider);
+    });
+  }
 
-      try {
-        if (context.state === "suspended") context.resume().catch(() => {});
-        const source = context.createBufferSource();
-        const gain = context.createGain();
-        source.buffer = sound.buffer;
-        gain.gain.value = clamp(volume * sound.gain, 0, 2.2);
-        source.connect(gain);
-        gain.connect(sfx.compressor);
-        source.start();
-      } catch (_) {}
-    }
-
-    function numberOr(value, fallback) {
-      const next = Number(value);
-      return Number.isFinite(next) ? next : fallback;
-    }
-
-    function degToRad(deg) {
-      return (Number(deg) || 0) * Math.PI / 180;
-    }
-
-    function drawRoundRect(context, x, y, w, h, r) {
-      const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
-      context.beginPath();
-      context.moveTo(x + radius, y);
-      context.arcTo(x + w, y, x + w, y + h, radius);
-      context.arcTo(x + w, y + h, x, y + h, radius);
-      context.arcTo(x, y + h, x, y, radius);
-      context.arcTo(x, y, x + w, y, radius);
-      context.closePath();
-    }
-
-    function worldToLocal(point, obj) {
-      const a = -degToRad(obj.angle || 0);
-      const c = Math.cos(a);
-      const s = Math.sin(a);
-      const dx = point.x - obj.x;
-      const dy = point.y - obj.y;
-      return {
-        x: dx * c - dy * s,
-        y: dx * s + dy * c
-      };
-    }
-
-    function rotateVector(obj, vector) {
-      const c = Math.cos(degToRad(obj.angle || 0));
-      const s = Math.sin(degToRad(obj.angle || 0));
-      return {
-        x: vector.x * c - vector.y * s,
-        y: vector.x * s + vector.y * c
-      };
-    }
-
-    function bounceNormalFor(ball, obj) {
-      if (obj.r) {
-        const dx = ball.position.x - obj.x;
-        const dy = ball.position.y - obj.y;
-        const length = Math.hypot(dx, dy) || 1;
-        return { x: dx / length, y: dy / length };
-      }
-
-      if (obj.w && obj.h) {
-        const local = worldToLocal(ball.position, obj);
-        const edgeX = obj.w / 2 - Math.abs(local.x);
-        const edgeY = obj.h / 2 - Math.abs(local.y);
-        const localNormal = edgeX < edgeY
-          ? { x: Math.sign(local.x) || 1, y: 0 }
-          : { x: 0, y: Math.sign(local.y) || -1 };
-        const normal = rotateVector(obj, localNormal);
-        const length = Math.hypot(normal.x, normal.y) || 1;
-        return { x: normal.x / length, y: normal.y / length };
-      }
-
-      return { x: 0, y: -1 };
-    }
-
-    function queueBounceBoost(engine, ball, obj) {
-      const bounce = numberOr(obj.restitution, 0.45);
-      if (bounce <= 1) return;
-      engine.plugin.bounceBoosts = engine.plugin.bounceBoosts || [];
-      engine.plugin.bounceBoosts.push({ ball, bounce, normal: bounceNormalFor(ball, obj) });
-    }
-
-    function applyQueuedBounceBoosts(engine) {
-      const boosts = engine.plugin.bounceBoosts || [];
-      if (!boosts.length) return;
-      engine.plugin.bounceBoosts = [];
-      boosts.forEach(({ ball, bounce, normal }) => {
-        if (!ball.parent || ball.isSleeping) return;
-        const extra = clamp(Math.sqrt(Math.max(0, bounce - 1)) * 1.8, 0, 28);
-        Body.setVelocity(ball, {
-          x: ball.velocity.x + normal.x * extra,
-          y: ball.velocity.y + normal.y * extra
+  function queryColliders(ball) {
+    const seen = new Set();
+    const result = [];
+    const radius = ball.r + 110;
+    const minX = Math.floor((ball.x - radius) / CONFIG.gridSize);
+    const maxX = Math.floor((ball.x + radius) / CONFIG.gridSize);
+    const minY = Math.floor((ball.y - radius) / CONFIG.gridSize);
+    const maxY = Math.floor((ball.y + radius) / CONFIG.gridSize);
+    for (let y = minY; y <= maxY; y += 1) {
+      for (let x = minX; x <= maxX; x += 1) {
+        const list = state.grid.get(gridKey(x, y));
+        if (!list) continue;
+        list.forEach((collider) => {
+          if (seen.has(collider)) return;
+          seen.add(collider);
+          result.push(collider);
         });
+      }
+    }
+    return result;
+  }
+
+  function reflectVelocity(ball, nx, ny, restitution) {
+    const vn = ball.vx * nx + ball.vy * ny;
+    if (vn >= 0) return;
+    const impulse = -(1 + restitution) * vn;
+    ball.vx += impulse * nx;
+    ball.vy += impulse * ny;
+  }
+
+  function resolveCircle(ball, collider) {
+    const dx = ball.x - collider.x;
+    const dy = ball.y - collider.y;
+    const dist = length(dx, dy);
+    const minDist = ball.r + collider.r;
+    if (dist >= minDist) return false;
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const overlap = minDist - dist;
+    ball.x += nx * overlap;
+    ball.y += ny * overlap;
+    reflectVelocity(ball, nx, ny, collider.restitution);
+
+    if (collider.obj.type === 'bumper') {
+      const boost = 260;
+      ball.vx += nx * boost;
+      ball.vy += ny * boost;
+      recordBumperHit(collider.obj);
+    }
+    return true;
+  }
+
+  function resolveBox(ball, collider) {
+    const c = Math.cos(-collider.angle);
+    const s = Math.sin(-collider.angle);
+    const dx = ball.x - collider.x;
+    const dy = ball.y - collider.y;
+    const lx = dx * c - dy * s;
+    const ly = dx * s + dy * c;
+    const hw = collider.w / 2;
+    const hh = collider.h / 2;
+    const closestX = clamp(lx, -hw, hw);
+    const closestY = clamp(ly, -hh, hh);
+    let nxLocal = lx - closestX;
+    let nyLocal = ly - closestY;
+    let distSq = nxLocal * nxLocal + nyLocal * nyLocal;
+
+    if (distSq > ball.r * ball.r) return false;
+
+    if (distSq < 0.0001) {
+      const edgeX = hw - Math.abs(lx);
+      const edgeY = hh - Math.abs(ly);
+      if (edgeX < edgeY) {
+        nxLocal = Math.sign(lx) || 1;
+        nyLocal = 0;
+      } else {
+        nxLocal = 0;
+        nyLocal = Math.sign(ly) || -1;
+      }
+      distSq = 1;
+    }
+
+    const dist = Math.sqrt(distSq);
+    const localNx = nxLocal / dist;
+    const localNy = nyLocal / dist;
+    const cos = Math.cos(collider.angle);
+    const sin = Math.sin(collider.angle);
+    const nx = localNx * cos - localNy * sin;
+    const ny = localNx * sin + localNy * cos;
+    const overlap = ball.r - dist;
+    ball.x += nx * overlap;
+    ball.y += ny * overlap;
+    reflectVelocity(ball, nx, ny, collider.restitution);
+    return true;
+  }
+
+  function insideBoxSensor(ball, sensor) {
+    const c = Math.cos(-sensor.angle);
+    const s = Math.sin(-sensor.angle);
+    const dx = ball.x - sensor.x;
+    const dy = ball.y - sensor.y;
+    const lx = dx * c - dy * s;
+    const ly = dx * s + dy * c;
+    return Math.abs(lx) <= sensor.w / 2 && Math.abs(ly) <= sensor.h / 2;
+  }
+
+  function resolveBoard(ball) {
+    const board = state.level.board;
+    const left = ball.r;
+    const right = board.width - ball.r;
+    const top = ball.r;
+    const bottom = board.height + ball.r * 2;
+    const bounce = 0.72;
+    if (ball.x < left) { ball.x = left; if (ball.vx < 0) ball.vx = -ball.vx * bounce; }
+    if (ball.x > right) { ball.x = right; if (ball.vx > 0) ball.vx = -ball.vx * bounce; }
+    if (ball.y < top) { ball.y = top; if (ball.vy < 0) ball.vy = -ball.vy * bounce; }
+    if (ball.y > bottom) ball.dead = true;
+  }
+
+  function stepBall(ball, dt) {
+    const gravity = state.level.board.gravity * CONFIG.gravityScale;
+    ball.vy += gravity * dt;
+    ball.vx *= 0.999;
+    ball.vy *= 0.999;
+    const speed = Math.hypot(ball.vx, ball.vy);
+    if (speed > CONFIG.maxBallSpeed) {
+      const scale = CONFIG.maxBallSpeed / speed;
+      ball.vx *= scale;
+      ball.vy *= scale;
+    }
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+
+    const nearby = queryColliders(ball);
+    for (let pass = 0; pass < 2; pass += 1) {
+      nearby.forEach((collider) => {
+        if (collider.kind === 'circle') resolveCircle(ball, collider);
+        else resolveBox(ball, collider);
       });
     }
 
-    function boundaryOptions(level, label, shape) {
-      const bounce = numberOr(level.board.borderRestitution, 0.42);
-      return {
-        isStatic: true,
-        restitution: clamp(bounce, 0, 1),
-        friction: numberOr(level.board.borderFriction, 0.04),
-        label,
-        plugin: {
-          blueprint: {
-            id: label,
-            type: "border",
-            restitution: bounce,
-            ...shape
-          }
-        }
-      };
-    }
+    resolveBoard(ball);
 
-    function boundarySegment(level, label, x, y, w, h, angle = 0) {
-      const body = Bodies.rectangle(x, y, w, h, boundaryOptions(level, label, { x, y, w, h, angle }));
-      Body.setAngle(body, degToRad(angle));
-      return body;
-    }
-
-    function makeBoardBoundaries(level) {
-      const { board } = level;
-      const w = board.width;
-      const h = board.height;
-      const t = Math.max(32, board.ballRadius * 4);
-      const r = clamp(numberOr(board.cornerRadius, 0), 0, Math.min(w, h) / 2 - 4);
-      const bodies = [
-        boundarySegment(level, "border-top", w / 2, -t / 2, Math.max(1, w - r * 2), t),
-        boundarySegment(level, "border-bottom", w / 2, h + t / 2, Math.max(1, w - r * 2), t),
-        boundarySegment(level, "border-left", -t / 2, h / 2, t, Math.max(1, h - r * 2)),
-        boundarySegment(level, "border-right", w + t / 2, h / 2, t, Math.max(1, h - r * 2))
-      ];
-
-      if (r > 0) {
-        const steps = clamp(Math.ceil(r / 10), 6, 18);
-        const arcLength = Math.max(18, (Math.PI * r / 2) / steps + t * 0.25);
-        [
-          { id: "tl", cx: r, cy: r, start: 180 },
-          { id: "tr", cx: w - r, cy: r, start: 270 },
-          { id: "br", cx: w - r, cy: h - r, start: 0 },
-          { id: "bl", cx: r, cy: h - r, start: 90 }
-        ].forEach((corner) => {
-          for (let i = 0; i < steps; i += 1) {
-            const deg = corner.start + (i + 0.5) * (90 / steps);
-            const rad = degToRad(deg);
-            bodies.push(boundarySegment(
-              level,
-              `border-${corner.id}-${i}`,
-              corner.cx + Math.cos(rad) * r,
-              corner.cy + Math.sin(rad) * r,
-              arcLength,
-              t,
-              deg + 90
-            ));
-          }
-        });
+    for (const sensor of state.slotSensors) {
+      if (insideBoxSensor(ball, sensor)) {
+        scoreBall(ball, sensor.obj);
+        break;
       }
-
-      return bodies;
     }
+  }
 
-    function makeEngine(level) {
-      const engine = Engine.create();
-      engine.positionIterations = isTouchDevice ? 4 : 6;
-      engine.velocityIterations = isTouchDevice ? 3 : 4;
-      engine.constraintIterations = isTouchDevice ? 1 : 2;
-      engine.gravity.y = numberOr(level.board.gravity, 1);
-      Composite.add(engine.world, makeBoardBoundaries(level));
+  function slotPoints(value) {
+    const match = String(value).match(/\d+/);
+    return match ? Number(match[0]) : 0;
+  }
 
-      level.objects.forEach((obj) => {
-        const bounce = numberOr(obj.restitution, 0.45);
-        const base = {
-          isStatic: true,
-          restitution: clamp(bounce, 0, 1),
-          friction: 0.04,
-          label: obj.id,
-          plugin: { blueprint: obj }
-        };
-        let body;
-        if (obj.type === "peg" || obj.type === "bumper") {
-          body = Bodies.circle(obj.x, obj.y, obj.r, base);
-        } else if (obj.type === "slot") {
-          body = Bodies.rectangle(obj.x, obj.y, obj.w, obj.h, { ...base, isSensor: true });
-          Body.setAngle(body, degToRad(obj.angle || 0));
-        } else {
-          body = Bodies.rectangle(obj.x, obj.y, obj.w, obj.h, base);
-          Body.setAngle(body, degToRad(obj.angle || 0));
-        }
-        Composite.add(engine.world, body);
-      });
+  function formatPoints(value) {
+    return Math.max(0, Math.floor(value)).toLocaleString('es-CO');
+  }
 
-      Events.on(engine, "collisionStart", (event) => {
-        event.pairs.forEach((pair) => {
-          const bodies = [pair.bodyA, pair.bodyB];
-          const ball = bodies.find((b) => b.label && b.label.startsWith("ball:"));
-          const obstacle = bodies.find((b) => {
-            const obj = b.plugin?.blueprint;
-            return obj && !["slot", "sensor"].includes(obj.type);
-          });
-          const slot = bodies.find((b) => b.plugin?.blueprint?.type === "slot");
-          if (ball && obstacle) {
-            const obj = obstacle.plugin.blueprint;
-            queueBounceBoost(engine, ball, obj);
-            if (obj.type === "bumper") recordBumperHit(obj);
-          }
-          if (ball && slot) scoreBall(engine, ball, slot.plugin.blueprint);
-        });
-      });
+  function currentCost() { return state.selectedCount * CONFIG.ballCost; }
 
-      Events.on(engine, "afterUpdate", () => applyQueuedBounceBoosts(engine));
-      return engine;
+  function updateHud() {
+    pointsEl.textContent = formatPoints(state.points);
+    rollCostEl.textContent = String(currentCost()) + " pts";
+    rollButton.disabled = state.points < currentCost();
+    document.querySelectorAll('.multiplier').forEach((button) => {
+      const count = Number(button.dataset.count);
+      button.classList.toggle('active', count === state.selectedCount);
+    });
+  }
+
+  let toastTimer = null;
+  function showToast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1400);
+  }
+
+  function recordSlotHit(slot) {
+    state.slotHits.set(slot.id, now());
+    playSfx('slot');
+    triggerClass('slot-impact', 520);
+  }
+
+  function recordBumperHit(obj) {
+    const last = state.bumperHits.get(obj.id) || 0;
+    const t = now();
+    state.bumperHits.set(obj.id, t);
+    if (t - last > 55) playSfx('bumper', 0.82);
+    triggerClass('bumper-impact', 700);
+  }
+
+  function triggerClass(className, duration) {
+    if (!machineEl) return;
+    machineEl.classList.remove(className);
+    void machineEl.offsetWidth;
+    machineEl.classList.add(className);
+    const key = className.startsWith('slot') ? 'slot' : 'bumper';
+    clearTimeout(state.timers[key]);
+    state.timers[key] = setTimeout(() => machineEl.classList.remove(className), duration);
+  }
+
+  function scoreBall(ball, slot) {
+    if (ball.dead) return;
+    ball.dead = true;
+    state.points += slotPoints(slot.value);
+    recordSlotHit(slot);
+    updateHud();
+  }
+
+  function spawnBall(x = state.level.spawn.x) {
+    playSfx('newball', 0.88);
+    state.balls.push({
+      id: state.nextBallId++,
+      x,
+      y: state.level.spawn.y,
+      vx: (Math.random() - 0.5) * 90,
+      vy: 0,
+      r: state.level.board.ballRadius,
+      angle: 0,
+      spin: (Math.random() - 0.5) * 6,
+      dead: false
+    });
+  }
+
+  function setSelectedCount(count) {
+    state.selectedCount = count;
+    updateHud();
+  }
+
+  function rollSelected() {
+    playSfx('button', 0.9);
+    const cost = currentCost();
+    if (state.points < cost) {
+      showToast('Puntos insuficientes');
+      return;
     }
-
-    function scoreBall(engine, ball, slot) {
-      if (state.scored.has(ball.id)) return;
-      state.scored.add(ball.id);
-      state.scores[slot.value] = (state.scores[slot.value] || 0) + 1;
-      state.points += slotPoints(slot.value);
-      recordSlotHit(slot);
-      updateHud();
+    state.points -= cost;
+    updateHud();
+    const count = state.selectedCount;
+    for (let i = 0; i < count; i += 1) {
       setTimeout(() => {
-        try {
-          World.remove(engine.world, ball);
-        } catch (_) {}
-      }, 0);
+        const spread = Math.min(20, 5 + count * 1.2);
+        spawnBall(state.level.spawn.x + (Math.random() - 0.5) * spread);
+      }, i * 90);
     }
+  }
 
-    function recordSlotHit(slot) {
-      state.slotHits.set(slot.id, performance.now());
-      playSfx("slot");
-      triggerSlotImpact();
-    }
+  function slotRewardTheme(value) {
+    const text = String(value);
+    if (text.startsWith('10')) return { label: '+10', core: '196,112,58', edge: '255,196,128', text: '#d47b3f', shadow: 'rgba(95,45,18,0.38)' };
+    if (text.startsWith('20')) return { label: '+20', core: '210,219,226', edge: '255,255,255', text: '#dce7ef', shadow: 'rgba(64,84,96,0.36)' };
+    return { label: '+50', core: '245,190,72', edge: '255,239,166', text: '#ffd166', shadow: 'rgba(105,69,10,0.4)' };
+  }
 
-    function triggerSlotImpact() {
-      if (!machineEl) return;
-      machineEl.classList.remove("slot-impact");
-      void machineEl.offsetWidth;
-      machineEl.classList.add("slot-impact");
-      clearTimeout(slotImpactTimer);
-      slotImpactTimer = setTimeout(() => {
-        machineEl.classList.remove("slot-impact");
-      }, 520);
-    }
+  function slotHitProgress(obj) {
+    const hitAt = state.slotHits.get(obj.id);
+    if (hitAt == null) return null;
+    const age = (now() - hitAt) / 900;
+    if (age >= 1) { state.slotHits.delete(obj.id); return null; }
+    return { age, pulse: 1 - age };
+  }
 
-    function slotPoints(value) {
-      const match = String(value).match(/\d+/);
-      return match ? Number(match[0]) : 0;
-    }
+  function drawSlot(obj) {
+    const hit = slotHitProgress(obj);
+    const age = hit?.age ?? 0;
+    const pulse = hit?.pulse ?? 0;
+    const jitter = pulse ? Math.sin(age * Math.PI * 18) * 2.4 * pulse : 0;
+    const lift = pulse ? -Math.sin(age * Math.PI) * 3 * pulse : 0;
+    const img = imageForObject(obj);
+    drawImageCentered(ctx, img, obj.x + jitter, obj.y + lift, obj.w * (1 + 0.03 * pulse), obj.h * (1 + 0.04 * pulse), obj.angle || 0);
+  }
 
-    function formatPoints(value) {
-      return Math.max(0, Math.floor(value)).toLocaleString("es-CO");
-    }
+  function drawBumper(obj) {
+    const hitAt = state.bumperHits.get(obj.id);
+    const age = hitAt ? (now() - hitAt) / 350 : Infinity;
+    const pulse = age < 1 ? (age < 0.1 ? age / 0.1 : Math.pow(1 - (age - 0.1) / 0.9, 3)) : 0;
+    if (hitAt && age >= 1) state.bumperHits.delete(obj.id);
+    const scale = 1 + 0.34 * pulse;
+    drawImageCentered(ctx, state.sprites.bumper, obj.x, obj.y, obj.r * 2 * scale, obj.r * 2 * scale);
+  }
 
-    function currentCost() {
-      return state.selectedCount * state.ballCost;
-    }
+  function drawSlotRewardText(obj) {
+    const hit = slotHitProgress(obj);
+    if (!hit) return;
+    const { age } = hit;
+    const theme = slotRewardTheme(obj.value);
+    const alpha = Math.max(0, 1 - age);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 30px Gotham, Montserrat, Avenir Next, ui-sans-serif, system-ui, sans-serif';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = theme.shadow;
+    ctx.fillStyle = theme.text;
+    ctx.strokeText(theme.label, obj.x, obj.y - 30 - age * 94);
+    ctx.fillText(theme.label, obj.x, obj.y - 30 - age * 94);
+    ctx.restore();
+  }
 
-    function updateHud() {
-      pointsEl.textContent = formatPoints(state.points);
-      rollCostEl.textContent = `${currentCost()} pts`;
-      rollButton.disabled = state.points < currentCost();
-      document.querySelectorAll(".multiplier").forEach((button) => {
-        const count = Number(button.dataset.count);
-        button.classList.toggle("active", count === state.selectedCount);
-      });
-    }
-
-    let toastTimer = null;
-    function showToast(message) {
-      toastEl.textContent = message;
-      toastEl.classList.add("show");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1400);
-    }
-
-    function setSelectedCount(count) {
-      state.selectedCount = count;
-      updateHud();
-    }
-
-    function rollSelected() {
-      playSfx("button", 0.9);
-      const cost = currentCost();
-      if (state.points < cost) {
-        showToast("Puntos insuficientes");
-        return;
-      }
-
-      state.points -= cost;
-      updateHud();
-
-      const count = state.selectedCount;
-      for (let i = 0; i < count; i += 1) {
-        setTimeout(() => {
-          const spread = Math.min(18, 4 + count * 1.2);
-          spawnBall(state.level.spawn.x + (Math.random() - 0.5) * spread);
-        }, i * 130);
-      }
-    }
-
-    function recordBumperHit(obj) {
-      state.bumperHits.set(obj.id, performance.now());
-      playSfx("bumper");
-      triggerBumperImpact();
-    }
-
-    function triggerBumperImpact() {
-      if (!machineEl) return;
-      machineEl.classList.remove("bumper-impact");
-      void machineEl.offsetWidth;
-      machineEl.classList.add("bumper-impact");
-      clearTimeout(bumperImpactTimer);
-      bumperImpactTimer = setTimeout(() => {
-        machineEl.classList.remove("bumper-impact");
-      }, 720);
-    }
-
-    function updateTrails(bodies = Composite.allBodies(state.engine.world)) {
-      const liveBallIds = new Set();
-      bodies
-        .filter((body) => body.label?.startsWith("ball:"))
-        .forEach((body) => {
-          liveBallIds.add(body.id);
-          const trail = state.trails.get(body.id) || [];
-          trail.push({
-            x: body.position.x,
-            y: body.position.y,
-            life: 1,
-            speed: Math.hypot(body.velocity.x, body.velocity.y)
-          });
-          while (trail.length > trailLimit) trail.shift();
-          state.trails.set(body.id, trail);
-        });
-
-      state.trails.forEach((trail, id) => {
-        trail.forEach((point) => {
-          point.life -= liveBallIds.has(id) ? 0.035 : 0.06;
-        });
-        const remaining = trail.filter((point) => point.life > 0);
-        if (remaining.length) state.trails.set(id, remaining);
-        else state.trails.delete(id);
-      });
-      const now = performance.now();
-      state.slotHits.forEach((startedAt, id) => {
-        if (now - startedAt > SLOT_HIT_DURATION + 40) state.slotHits.delete(id);
-      });
-    }
-
-    function imageForObject(obj) {
-      if (obj.type === "peg") return state.sprites.peg;
-      if (obj.type === "bumper") return state.sprites.bumper;
-      if (obj.id === "piso") return state.sprites.floor;
-      if (obj.type === "wall") return state.sprites.divider;
-      if (obj.type === "slot") {
-        if (String(obj.value).startsWith("10")) return state.sprites.slot10;
-        if (String(obj.value).startsWith("20")) return state.sprites.slot20;
-        return state.sprites.slot50;
-      }
-      return null;
-    }
-
-    function drawImageCenteredOn(context, img, x, y, w, h, angle = 0) {
-      if (!img) return;
-      context.save();
-      context.translate(x, y);
-      context.rotate(degToRad(angle));
-      context.drawImage(img, -w / 2, -h / 2, w, h);
-      context.restore();
-    }
-
-    function drawImageCentered(img, x, y, w, h, angle = 0) {
-      drawImageCenteredOn(ctx, img, x, y, w, h, angle);
-    }
-
-    function drawBumper(obj, img) {
-      const hitAt = state.bumperHits.get(obj.id);
-      const age = hitAt ? (performance.now() - hitAt) / 360 : Infinity;
-      const pulse = age < 1 ? 1 - age : 0;
-      const snapPulse = age < 0.12 ? age / 0.12 : Math.pow(Math.max(0, 1 - (age - 0.12) / 0.88), 3.2);
-      if (hitAt && age >= 1) state.bumperHits.delete(obj.id);
-
-      if (pulse > 0 && !isTouchDevice) {
-        ctx.save();
-        ctx.globalCompositeOperation = "screen";
-        ctx.strokeStyle = `rgba(90, 188, 255, ${0.42 * pulse})`;
-        ctx.fillStyle = `rgba(70, 150, 255, ${0.15 * pulse})`;
-        ctx.lineWidth = 5 + 12 * pulse;
-        ctx.beginPath();
-        ctx.arc(obj.x, obj.y, obj.r * (1.1 + 0.95 * (1 - pulse)), 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      const scale = 1 + 0.36 * snapPulse;
-      drawImageCentered(img, obj.x, obj.y, obj.r * 2 * scale, obj.r * 2 * scale);
-    }
-
-    function slotRewardTheme(value) {
-      const text = String(value);
-      if (text.startsWith("10")) {
-        return {
-          label: "+10",
-          core: "196, 112, 58",
-          edge: "255, 196, 128",
-          text: "#d47b3f",
-          shadow: "rgba(95, 45, 18, 0.38)"
-        };
-      }
-      if (text.startsWith("20")) {
-        return {
-          label: "+20",
-          core: "210, 219, 226",
-          edge: "255, 255, 255",
-          text: "#dce7ef",
-          shadow: "rgba(64, 84, 96, 0.36)"
-        };
-      }
-      return {
-        label: "+50",
-        core: "245, 190, 72",
-        edge: "255, 239, 166",
-        text: "#ffd166",
-        shadow: "rgba(105, 69, 10, 0.4)"
-      };
-    }
-
-    function slotHitProgress(obj) {
-      const hitAt = state.slotHits.get(obj.id);
-      if (hitAt == null) return null;
-      const age = (performance.now() - hitAt) / SLOT_HIT_DURATION;
-      if (age >= 1) {
-        state.slotHits.delete(obj.id);
-        return null;
-      }
-      return { age, pulse: 1 - age };
-    }
-
-    function drawSlot(obj, img) {
-      const hit = slotHitProgress(obj);
-      const age = hit?.age ?? Infinity;
-      const pulse = hit?.pulse ?? 0;
-
-      if (pulse > 0) {
-        const jitter = Math.sin(age * Math.PI * 18) * 2.8 * pulse;
-        const lift = -Math.sin(age * Math.PI) * 4 * pulse;
-        drawImageCentered(img, obj.x + jitter, obj.y + lift, obj.w * (1 + 0.035 * pulse), obj.h * (1 + 0.05 * pulse), obj.angle || 0);
-        return;
-      }
-
-      drawImageCentered(img, obj.x, obj.y, obj.w, obj.h, obj.angle || 0);
-    }
-
-    function drawSlotRewardGlow(obj) {
-      if (isTouchDevice) return;
-      const hit = slotHitProgress(obj);
-      if (!hit) return;
-      const { age, pulse } = hit;
-      const theme = slotRewardTheme(obj.value);
-      const beamHeight = 230;
-      const rise = age * 18;
-
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      const beam = ctx.createLinearGradient(obj.x, obj.y + obj.h * 0.35, obj.x, obj.y - beamHeight);
-      beam.addColorStop(0, `rgba(${theme.core}, ${0.48 * pulse})`);
-      beam.addColorStop(0.36, `rgba(${theme.edge}, ${0.28 * pulse})`);
-      beam.addColorStop(0.72, `rgba(${theme.edge}, ${0.12 * pulse})`);
-      beam.addColorStop(1, `rgba(${theme.edge}, 0)`);
-      ctx.fillStyle = beam;
-      ctx.beginPath();
-      ctx.ellipse(obj.x, obj.y - beamHeight * 0.43 - rise, obj.w * (0.76 + 0.22 * pulse), beamHeight * 0.72, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      const baseGlow = ctx.createRadialGradient(obj.x, obj.y, 0, obj.x, obj.y, Math.max(obj.w, obj.h) * 1.18);
-      baseGlow.addColorStop(0, `rgba(${theme.edge}, ${0.28 * pulse})`);
-      baseGlow.addColorStop(0.38, `rgba(${theme.core}, ${0.24 * pulse})`);
-      baseGlow.addColorStop(1, `rgba(${theme.core}, 0)`);
-      ctx.fillStyle = baseGlow;
-      ctx.beginPath();
-      ctx.ellipse(obj.x, obj.y - 2, obj.w * 0.88, obj.h * 1.18, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawSlotRewardText(obj) {
-      const hit = slotHitProgress(obj);
-      if (!hit) return;
-      const { age } = hit;
-      const theme = slotRewardTheme(obj.value);
-      const textAlpha = Math.max(0, 1 - age);
-      const textY = obj.y - 30 - age * 96;
-      ctx.save();
-      ctx.globalAlpha = textAlpha;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = "900 30px Gotham, Montserrat, Avenir Next, ui-sans-serif, system-ui, sans-serif";
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = theme.shadow;
-      ctx.fillStyle = theme.text;
-      ctx.shadowColor = isTouchDevice ? "transparent" : `rgba(${theme.edge}, ${0.58 * textAlpha})`;
-      ctx.shadowBlur = isTouchDevice ? 0 : 22;
-      ctx.strokeText(theme.label, obj.x, textY);
-      ctx.fillText(theme.label, obj.x, textY);
-      ctx.restore();
-    }
-
-    function drawObject(obj) {
+  function makeStaticLayer() {
+    const { width, height, cornerRadius } = state.level.board;
+    const layer = document.createElement('canvas');
+    layer.width = width;
+    layer.height = height;
+    const c = layer.getContext('2d');
+    c.imageSmoothingEnabled = true;
+    c.imageSmoothingQuality = isTouchDevice ? 'medium' : 'high';
+    drawRoundRect(c, 0, 0, width, height, cornerRadius || 0);
+    c.clip();
+    c.drawImage(state.images.board, 0, 0, width, height);
+    state.objectGroups.walls.forEach((obj) => {
       const img = imageForObject(obj);
-      if (obj.type === "bumper") {
-        drawBumper(obj, img);
-        return;
-      }
-
-      if (obj.type === "peg") {
-        drawImageCentered(img, obj.x, obj.y, obj.r * 2, obj.r * 2);
-        return;
-      }
-
-      if (obj.type === "wall") {
-        if (obj.id === "piso") {
-          drawImageCentered(img, obj.x, obj.y, obj.w, obj.h, obj.angle || 0);
-        } else {
-          drawImageCentered(img, obj.x, obj.y, Math.min(obj.w, obj.h), Math.max(obj.w, obj.h), 0);
-        }
-        return;
-      }
-
-      if (obj.type === "slot") {
-        drawSlot(obj, img);
-      }
-    }
-
-    function drawDebugBody(body) {
-      const obj = body.plugin?.blueprint;
-      if (!obj || body.label.startsWith("ball:")) return;
-      ctx.save();
-      ctx.strokeStyle = obj.type === "slot" ? "rgba(18,111,107,0.55)" : "rgba(214,61,43,0.58)";
-      ctx.lineWidth = 1.5;
-      if (body.circleRadius) {
-        ctx.beginPath();
-        ctx.arc(body.position.x, body.position.y, body.circleRadius, 0, Math.PI * 2);
-        ctx.stroke();
-      } else {
-        ctx.beginPath();
-        body.vertices.forEach((v, i) => i ? ctx.lineTo(v.x, v.y) : ctx.moveTo(v.x, v.y));
-        ctx.closePath();
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawBall(body) {
-      const r = state.level.board.ballRadius;
-      drawImageCentered(state.sprites.ball, body.position.x, body.position.y, r * 2, r * 2, body.angle * 180 / Math.PI);
-    }
-
-    function drawBallTrails() {
-      if (isTouchDevice) return;
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      state.trails.forEach((trail) => {
-        if (trail.length < 2) return;
-        for (let i = 1; i < trail.length; i += 1) {
-          const prev = trail[i - 1];
-          const point = trail[i];
-          const t = i / (trail.length - 1);
-          const alpha = clamp(point.life * t * 0.38, 0, 0.38);
-          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-          ctx.lineWidth = 2 + t * 8 + clamp(point.speed, 0, 12) * 0.18;
-          ctx.lineCap = "round";
-          ctx.beginPath();
-          ctx.moveTo(prev.x, prev.y);
-          ctx.lineTo(point.x, point.y);
-          ctx.stroke();
-        }
-      });
-      ctx.restore();
-    }
-
-    function prepareLevelRender(level) {
-      state.objectGroups = {
-        slots: level.objects.filter((obj) => obj.type === "slot"),
-        walls: level.objects.filter((obj) => obj.type === "wall"),
-        pegs: level.objects.filter((obj) => obj.type === "peg"),
-        bumpers: level.objects.filter((obj) => obj.type === "bumper")
-      };
-      state.staticLayer = makeStaticLayer(level);
-    }
-
-    function drawStaticObject(context, obj) {
-      const img = imageForObject(obj);
-      if (obj.type === "peg") {
-        drawImageCenteredOn(context, img, obj.x, obj.y, obj.r * 2, obj.r * 2);
-        return;
-      }
-
-      if (obj.type === "wall") {
-        if (obj.id === "piso") {
-          drawImageCenteredOn(context, img, obj.x, obj.y, obj.w, obj.h, obj.angle || 0);
-        } else {
-          drawImageCenteredOn(context, img, obj.x, obj.y, Math.min(obj.w, obj.h), Math.max(obj.w, obj.h), 0);
-        }
-      }
-    }
-
-    function makeStaticLayer(level) {
-      const { width, height, cornerRadius } = level.board;
-      const layer = document.createElement("canvas");
-      layer.width = width;
-      layer.height = height;
-      const layerCtx = layer.getContext("2d");
-      layerCtx.imageSmoothingEnabled = true;
-      layerCtx.imageSmoothingQuality = isTouchDevice ? "medium" : "high";
-      drawRoundRect(layerCtx, 0, 0, width, height, cornerRadius || 0);
-      layerCtx.clip();
-      layerCtx.drawImage(state.images.board, 0, 0, width, height);
-      state.objectGroups.walls.forEach((obj) => drawStaticObject(layerCtx, obj));
-      state.objectGroups.pegs.forEach((obj) => drawStaticObject(layerCtx, obj));
-      return layer;
-    }
-
-    function resizeCanvasIfNeeded(level) {
-      const { width, height } = level.board;
-      const scale = canvas.clientWidth / width;
-      const nextWidth = Math.max(1, Math.round(width * scale * dpr));
-      const nextHeight = Math.max(1, Math.round(height * scale * dpr));
-
-      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
-        canvas.width = nextWidth;
-        canvas.height = nextHeight;
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = isTouchDevice ? "medium" : "high";
-      }
-
-      state.renderWidth = nextWidth;
-      state.renderHeight = nextHeight;
-      state.renderScale = scale;
-      return scale;
-    }
-
-    function draw(bodies = Composite.allBodies(state.engine.world)) {
-      const level = state.level;
-      const groups = state.objectGroups;
-      const { width, height, cornerRadius } = level.board;
-      const scale = resizeCanvasIfNeeded(level);
-      ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
-      ctx.clearRect(0, 0, width, height);
-
-      ctx.save();
-      drawRoundRect(ctx, 0, 0, width, height, cornerRadius || 0);
-      ctx.clip();
-      if (state.staticLayer) ctx.drawImage(state.staticLayer, 0, 0, width, height);
-      else ctx.drawImage(state.images.board, 0, 0, width, height);
-
-      groups.slots.forEach(drawSlotRewardGlow);
-      groups.slots.forEach(drawObject);
-      groups.bumpers.forEach(drawObject);
-
-      drawBallTrails();
-
-      bodies
-        .filter((body) => body.label?.startsWith("ball:"))
-        .forEach(drawBall);
-
-      groups.slots.forEach(drawSlotRewardText);
-
-      if (state.debug) bodies.forEach(drawDebugBody);
-
-      ctx.strokeStyle = "rgba(255,255,255,0.7)";
-      ctx.lineWidth = 2;
-      drawRoundRect(ctx, 1, 1, width - 2, height - 2, Math.max(0, (cornerRadius || 0) - 1));
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    function tick(timestamp = performance.now()) {
-      const previous = state.lastFrameAt || timestamp - 1000 / 60;
-      const elapsed = clamp(timestamp - previous, 0, 100);
-      state.lastFrameAt = timestamp;
-
-      state.physicsAccumulator += elapsed * PHYSICS_TIME_SCALE;
-      let physicsSteps = 0;
-      while (state.physicsAccumulator >= FIXED_PHYSICS_STEP && physicsSteps < MAX_PHYSICS_STEPS) {
-        Engine.update(state.engine, FIXED_PHYSICS_STEP);
-        state.physicsAccumulator -= FIXED_PHYSICS_STEP;
-        physicsSteps += 1;
-      }
-      if (physicsSteps === MAX_PHYSICS_STEPS) state.physicsAccumulator = 0;
-
-      const bodies = Composite.allBodies(state.engine.world);
-      bodies.forEach((body) => {
-        if (body.label?.startsWith("ball:") && body.position.y > state.level.board.height + 140) {
-          World.remove(state.engine.world, body);
-        }
-      });
-      if (isTouchDevice) state.trails.clear();
-      else updateTrails(bodies);
-      draw(bodies);
-      state.raf = requestAnimationFrame(tick);
-    }
-
-    function spawnBall(x = state.lastSpawnX ?? state.level.spawn.x) {
-      const level = state.level;
-      playSfx("newball", 0.92);
-      const ball = Bodies.circle(x, level.spawn.y, level.board.ballRadius, {
-        label: `ball:${Date.now()}:${Math.random().toString(16).slice(2)}`,
-        restitution: 0.02,
-        friction: 0.018,
-        frictionAir: 0.002,
-        density: 0.004,
-        collisionFilter: {
-          category: 0x0002,
-          mask: 0x0001
-        }
-      });
-      Body.setVelocity(ball, { x: (Math.random() - 0.5) * 2, y: 0 });
-      Composite.add(state.engine.world, ball);
-    }
-
-    function reset() {
-      if (state.raf) cancelAnimationFrame(state.raf);
-      if (state.engine) {
-        World.clear(state.engine.world, false);
-        Engine.clear(state.engine);
-      }
-      state.scores = {};
-      state.scored = new Set();
-      state.bumperHits = new Map();
-      state.trails = new Map();
-      state.slotHits = new Map();
-      state.lastFrameAt = null;
-      state.physicsAccumulator = 0;
-      state.engine = makeEngine(state.level);
-      updateHud();
-      tick();
-    }
-
-    function loadImage(src) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
-        img.src = src;
-      });
-    }
-
-    function resampleImage(img, width, height) {
-      const targetWidth = Math.max(1, Math.round(width));
-      const targetHeight = Math.max(1, Math.round(height));
-      let source = img;
-      let sourceWidth = img.naturalWidth || img.width;
-      let sourceHeight = img.naturalHeight || img.height;
-
-      while (sourceWidth / 2 > targetWidth * 1.25 && sourceHeight / 2 > targetHeight * 1.25) {
-        const step = document.createElement("canvas");
-        step.width = Math.max(targetWidth, Math.round(sourceWidth / 2));
-        step.height = Math.max(targetHeight, Math.round(sourceHeight / 2));
-        const stepContext = step.getContext("2d");
-        stepContext.imageSmoothingEnabled = true;
-        stepContext.imageSmoothingQuality = "high";
-        stepContext.drawImage(source, 0, 0, step.width, step.height);
-        source = step;
-        sourceWidth = step.width;
-        sourceHeight = step.height;
-      }
-
-      const canvasEl = document.createElement("canvas");
-      canvasEl.width = targetWidth;
-      canvasEl.height = targetHeight;
-      const context = canvasEl.getContext("2d");
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
-      context.drawImage(source, 0, 0, targetWidth, targetHeight);
-      return canvasEl;
-    }
-
-    function maxObjectSize(level, predicate, fallback) {
-      const size = level.objects.reduce((acc, obj) => {
-        if (!predicate(obj)) return acc;
-        const w = obj.r ? obj.r * 2 : obj.w || 0;
-        const h = obj.r ? obj.r * 2 : obj.h || 0;
-        return { w: Math.max(acc.w, w), h: Math.max(acc.h, h) };
-      }, { w: 0, h: 0 });
-      return {
-        w: size.w || fallback.w,
-        h: size.h || fallback.h
-      };
-    }
-
-    function makeSprites(images, level) {
-      const spriteScale = isTouchDevice ? 2 : Math.min(4, Math.max(2, Math.ceil(window.devicePixelRatio || 1)));
-      const ball = { w: level.board.ballRadius * 2, h: level.board.ballRadius * 2 };
-      const peg = maxObjectSize(level, (obj) => obj.type === "peg", { w: 14, h: 14 });
-      const bumper = maxObjectSize(level, (obj) => obj.type === "bumper", { w: 60, h: 60 });
-      const divider = maxObjectSize(level, (obj) => obj.type === "wall" && obj.id !== "piso", { w: 20, h: 120 });
-      const floor = maxObjectSize(level, (obj) => obj.id === "piso", { w: level.board.width, h: 51 });
-      const slot10 = maxObjectSize(level, (obj) => obj.type === "slot" && String(obj.value).startsWith("10"), { w: 128, h: 57 });
-      const slot20 = maxObjectSize(level, (obj) => obj.type === "slot" && String(obj.value).startsWith("20"), { w: 128, h: 57 });
-      const slot50 = maxObjectSize(level, (obj) => obj.type === "slot" && String(obj.value) === "50", { w: 128, h: 57 });
-
-      return {
-        ball: resampleImage(images.ball, ball.w * spriteScale, ball.h * spriteScale),
-        peg: resampleImage(images.peg, peg.w * spriteScale, peg.h * spriteScale),
-        bumper: resampleImage(images.bumper, bumper.w * spriteScale, bumper.h * spriteScale),
-        divider: resampleImage(images.divider, divider.w * spriteScale, divider.h * spriteScale),
-        floor: resampleImage(images.floor, floor.w * spriteScale, floor.h * spriteScale),
-        slot10: resampleImage(images.slot10, slot10.w * spriteScale, slot10.h * spriteScale),
-        slot20: resampleImage(images.slot20, slot20.w * spriteScale, slot20.h * spriteScale),
-        slot50: resampleImage(images.slot50, slot50.w * spriteScale, slot50.h * spriteScale)
-      };
-    }
-
-    async function loadLevel() {
-      try {
-        const response = await fetch("preview-level.json", { cache: "no-store" });
-        if (response.ok) return response.json();
-      } catch (_) {}
-
-      return typeof structuredClone === "function"
-        ? structuredClone(embeddedLevel)
-        : JSON.parse(JSON.stringify(embeddedLevel));
-    }
-
-    async function init() {
-      makeFallbackSfx();
-      if (isTouchDevice) {
-        sfx.failed = true;
-      } else {
-        sfx.loading = loadSfxBuffers().catch((error) => {
-          sfx.failed = true;
-          console.warn("SFX desactivados", error);
-        });
-      }
-
-      const [level, loadedImages] = await Promise.all([
-        loadLevel(),
-        Promise.all(Object.entries(assetPaths).map(async ([key, src]) => [key, await loadImage(src)]))
-      ]);
-      state.level = level;
-      state.images = Object.fromEntries(loadedImages);
-      state.sprites = makeSprites(state.images, level);
-      prepareLevelRender(level);
-      reset();
-    }
-
-    rollButton.addEventListener("click", rollSelected);
-    document.querySelectorAll(".multiplier").forEach((button) => {
-      button.addEventListener("click", () => {
-        playSfx("button", 0.78);
-        setSelectedCount(Number(button.dataset.count));
-      });
+      if (obj.id === 'piso') drawImageCentered(c, img, obj.x, obj.y, obj.w, obj.h, obj.angle || 0);
+      else drawImageCentered(c, img, obj.x, obj.y, Math.min(obj.w, obj.h), Math.max(obj.w, obj.h), 0);
     });
+    state.objectGroups.pegs.forEach((obj) => drawImageCentered(c, state.sprites.peg, obj.x, obj.y, obj.r * 2, obj.r * 2));
+    state.staticLayer = layer;
+  }
 
-    init().catch((error) => {
-      console.error(error);
-      showToast(error.message || "No se pudo cargar");
+  function resizeCanvasIfNeeded() {
+    const { width, height } = state.level.board;
+    const scale = canvas.clientWidth / width;
+    const nextWidth = Math.max(1, Math.round(width * scale * renderDpr));
+    const nextHeight = Math.max(1, Math.round(height * scale * renderDpr));
+    if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+      canvas.width = nextWidth;
+      canvas.height = nextHeight;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = isTouchDevice ? 'medium' : 'high';
+    }
+    state.renderScale = scale;
+    return scale;
+  }
+
+  function draw() {
+    const { width, height, cornerRadius } = state.level.board;
+    const scale = resizeCanvasIfNeeded();
+    ctx.setTransform(scale * renderDpr, 0, 0, scale * renderDpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    ctx.save();
+    drawRoundRect(ctx, 0, 0, width, height, cornerRadius || 0);
+    ctx.clip();
+    ctx.drawImage(state.staticLayer, 0, 0, width, height);
+    state.objectGroups.slots.forEach(drawSlot);
+    state.objectGroups.bumpers.forEach(drawBumper);
+    state.balls.forEach((ball) => {
+      ball.angle += ball.spin * (1 / 60);
+      drawImageCentered(ctx, state.sprites.ball, ball.x, ball.y, ball.r * 2, ball.r * 2, ball.angle * 180 / Math.PI);
     });
-  </script>
+    state.objectGroups.slots.forEach(drawSlotRewardText);
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 2;
+    drawRoundRect(ctx, 1, 1, width - 2, height - 2, Math.max(0, (cornerRadius || 0) - 1));
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function updatePhysics(dt) {
+    state.balls.forEach((ball) => stepBall(ball, dt));
+    state.balls = state.balls.filter((ball) => !ball.dead);
+  }
+
+  function tick(timestamp = performance.now()) {
+    const previous = state.lastFrameAt || timestamp;
+    const elapsed = clamp(timestamp - previous, 0, 80);
+    state.lastFrameAt = timestamp;
+    state.accumulator += elapsed * CONFIG.timeScale;
+    let steps = 0;
+    while (state.accumulator >= CONFIG.physicsStep && steps < CONFIG.maxSteps) {
+      updatePhysics(CONFIG.physicsStep / 1000);
+      state.accumulator -= CONFIG.physicsStep;
+      steps += 1;
+    }
+    if (steps === CONFIG.maxSteps) state.accumulator = 0;
+    draw();
+    state.raf = requestAnimationFrame(tick);
+  }
+
+  function reset() {
+    cancelAnimationFrame(state.raf);
+    state.balls = [];
+    state.nextBallId = 1;
+    state.bumperHits = new Map();
+    state.slotHits = new Map();
+    state.lastFrameAt = null;
+    state.accumulator = 0;
+    updateHud();
+    tick();
+  }
+
+  async function init() {
+    makeFallbackSfx();
+    const loadedImages = await Promise.all(Object.entries(assetPaths).map(async ([key, src]) => [key, await loadImage(src)]));
+    state.images = Object.fromEntries(loadedImages);
+    prepareGroups();
+    makeSprites();
+    buildCollisionWorld();
+    makeStaticLayer();
+    reset();
+  }
+
+  rollButton.addEventListener('click', rollSelected);
+  document.querySelectorAll('.multiplier').forEach((button) => {
+    button.addEventListener('click', () => {
+      playSfx('button', 0.78);
+      setSelectedCount(Number(button.dataset.count));
+    });
+  });
+
+  init().catch((error) => {
+    console.error(error);
+    showToast(error.message || 'No se pudo cargar');
+  });
+})();
+
+</script>
 </body>
 </html>
